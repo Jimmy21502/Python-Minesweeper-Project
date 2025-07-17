@@ -7,6 +7,7 @@ import random as r
 # Constants
 EASY_GRID = 9
 MEDIUM_GRID = 16
+HARD_GRID = 20
 EASY_TOTAL_TILES = 81
 MEDIUM_TOTAL_TILES = 256
 HARD_TOTAL_TILES = 480
@@ -126,17 +127,74 @@ class Minesweeper:
         frame = tk.Frame(self.container)
         frame.grid(row = 0, column = 0, sticky = "NSEW")
 
+        easy_tile_locations = [(i, j) for i  in range(EASY_GRID) for j in range(EASY_GRID)]
+        self.easy_buttons = []
+        self.easy_bombs = r.sample(easy_tile_locations, k=EASY_TOTAL_BOMBS)
+        print(f"Easy Bombs: {self.easy_bombs}") # For debugging
+
+        for i in range(EASY_GRID):
+            easy_row = []
+            for j in range(EASY_GRID):
+                easy_tile = tk.Button(frame, borderwidth=1, width = 2, height = 1,
+                                      command = lambda x=i, y=j: self.easy_clicks(x, y))
+                easy_tile.grid(row = i, column = j, sticky = "NSEW")
+                easy_row.append(easy_tile)
+            self.easy_buttons.append(easy_row)
+
+        for i in range(EASY_GRID):
+            frame.grid_rowconfigure(i, weight = 1)
+        for j in range(EASY_GRID):
+            frame.grid_columnconfigure(j, weight = 1)
+
         return frame
 
     def create_medium_frame(self):
         frame = tk.Frame(self.container)
         frame.grid(row = 0, column = 0, sticky = "NSEW")
 
+        medium_tile_locations = [(i, j) for i  in range(MEDIUM_GRID) for j in range(MEDIUM_GRID)]
+        self.medium_buttons = []
+        self.medium_bombs = r.sample(medium_tile_locations, k=MEDIUM_TOTAL_BOMBS)
+        print(f"Medium Bombs: {self.medium_bombs}") # For debugging
+
+        for i in range(MEDIUM_GRID):
+            medium_row = []
+            for j in range(MEDIUM_GRID):
+                medium_tile = tk.Button(frame, borderwidth=1, width = 2, height = 1,
+                                      command = lambda x=i, y=j: self.medium_clicks(x, y))
+                medium_tile.grid(row = i, column = j, sticky = "NSEW")
+                medium_row.append(medium_tile)
+            self.medium_buttons.append(medium_row)
+
+        for i in range(MEDIUM_GRID):
+            frame.grid_rowconfigure(i, weight = 1)
+        for j in range(MEDIUM_GRID):
+            frame.grid_columnconfigure(j, weight = 1)
+
         return frame
 
     def create_hard_frame(self):
         frame = tk.Frame(self.container)
         frame.grid(row = 0, column = 0, sticky = "NSEW")
+
+        hard_tile_locations = [(i, j) for i  in range(HARD_GRID) for j in range(HARD_GRID)]
+        self.hard_buttons = []
+        self.hard_bombs = r.sample(hard_tile_locations, k=HARD_TOTAL_BOMBS)
+        print(f"Hard Bombs: {self.hard_bombs}") # For debugging
+
+        for i in range(HARD_GRID):
+            hard_row = []
+            for j in range(HARD_GRID):
+                hard_tile = tk.Button(frame, borderwidth=1, width = 2, height = 1,
+                                      command = lambda x=i, y=j: self.hard_clicks(x, y))
+                hard_tile.grid(row = i, column = j, sticky = "NSEW")
+                hard_row.append(hard_tile)
+            self.medium_buttons.append(hard_row)
+
+        for i in range(HARD_GRID):
+            frame.grid_rowconfigure(i, weight = 1)
+        for j in range(HARD_GRID):
+            frame.grid_columnconfigure(j, weight = 1)
 
         return frame
 
@@ -157,6 +215,41 @@ class Minesweeper:
         frame.grid(row = 0, column = 0, sticky = "NSEW")
 
         return frame
+
+    def easy_clicks(self, i, j):
+        print(f"You clicked: ({i}, {j})") # For Debugging
+        if (i, j) in self.easy_bombs:
+            print("Bomb")
+            self.easy_buttons[i][j].config(bg="red", state="disabled", text="💣")
+        else:
+            print("Safe")
+            self.reveal_tiles(i, j, self.easy_bombs, self.easy_buttons)
+
+    def medium_clicks(self, i, j):
+        print(f"You clicked: ({i}, {j})") # For Debugging
+        if (i, j) in self.medium_bombs:
+            print("Bomb")
+            self.medium_buttons[i][j].config(bg="red", state="disabled", text="💣")
+        else:
+            print("Safe")
+            self.reveal_tiles(i, j, self.medium_bombs, self.medium_buttons)
+
+    def hard_clicks(self, i, j):
+        print(f"You clicked: ({i}, {j})") # For Debugging
+        if (i, j) in self.hard_bombs:
+            print("Bomb")
+            self.hard_buttons[i][j].config(bg="red", state="disabled", text="💣")
+        else:
+            print("Safe")
+            self.reveal_tiles(i, j, self.hard_bombs, self.hard_buttons)
+
+    def reveal_tiles(self, i, j, bomb_type, button_type):
+        counter = 0
+        neighboring_tiles = (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
+        for item in neighboring_tiles:
+            if item in bomb_type:
+                counter += 1
+        button_type[i][j].config(bg="light grey", state="disabled", text=counter)
 
 if __name__ == "__main__":
     app = Minesweeper()
