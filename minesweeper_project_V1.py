@@ -13,7 +13,7 @@ MEDIUM_TOTAL_TILES = 256
 HARD_TOTAL_TILES = 480
 EASY_TOTAL_BOMBS = 10
 MEDIUM_TOTAL_BOMBS = 40
-HARD_TOTAL_BOMBS = 100
+HARD_TOTAL_BOMBS = 80
 
 class Minesweeper:
 
@@ -223,7 +223,7 @@ class Minesweeper:
             self.easy_buttons[i][j].config(bg="red", state="disabled", text="💣")
         else:
             print("Safe")
-            self.reveal_tiles(i, j, self.easy_bombs, self.easy_buttons)
+            self.reveal_tiles(i, j, self.easy_bombs, self.easy_buttons, EASY_GRID)
 
     def medium_clicks(self, i, j):
         print(f"You clicked: ({i}, {j})") # For Debugging
@@ -232,7 +232,7 @@ class Minesweeper:
             self.medium_buttons[i][j].config(bg="red", state="disabled", text="💣")
         else:
             print("Safe")
-            self.reveal_tiles(i, j, self.medium_bombs, self.medium_buttons)
+            self.reveal_tiles(i, j, self.medium_bombs, self.medium_buttons, MEDIUM_GRID)
 
     def hard_clicks(self, i, j):
         print(f"You clicked: ({i}, {j})") # For Debugging
@@ -241,15 +241,29 @@ class Minesweeper:
             self.hard_buttons[i][j].config(bg="red", state="disabled", text="💣")
         else:
             print("Safe")
-            self.reveal_tiles(i, j, self.hard_bombs, self.hard_buttons)
+            self.reveal_tiles(i, j, self.hard_bombs, self.hard_buttons, HARD_GRID)
 
-    def reveal_tiles(self, i, j, bomb_type, button_type):
+    def reveal_tiles(self, i, j, bomb_type, button_type, grid_size):
+        # Boundaries
+        if 0 > i > (grid_size - 1) or 0 > j > (grid_size - 1):
+            return
+        if (i, j) in bomb_type:
+            return
+        if button_type[i][j] == tk.DISABLED:
+            return
+
         counter = 0
         neighboring_tiles = (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
-        for item in neighboring_tiles:
-            if item in bomb_type:
-                counter += 1
-        button_type[i][j].config(bg="light grey", state="disabled", text=counter)
+        for x, y in neighboring_tiles:
+            if 0 < x < (grid_size - 1) and 0 < y < (grid_size - 1):
+                if (x, y) in bomb_type:
+                    counter += 1
+        if counter > 0:
+            button_type[i][j].config(bg="light grey", state="disabled", text=counter)
+        else:
+            for x, y in neighboring_tiles:
+                if 0 < x < (grid_size - 1) and 0 < y < (grid_size - 1):
+                    self.reveal_tiles(i, j, bomb_type, button_type, grid_size)
 
 if __name__ == "__main__":
     app = Minesweeper()
