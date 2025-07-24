@@ -10,7 +10,7 @@ MEDIUM_GRID = 16
 HARD_GRID = 20
 EASY_TOTAL_TILES = 81
 MEDIUM_TOTAL_TILES = 256
-HARD_TOTAL_TILES = 480
+HARD_TOTAL_TILES = 400
 EASY_TOTAL_BOMBS = 10
 MEDIUM_TOTAL_BOMBS = 40
 HARD_TOTAL_BOMBS = 80
@@ -133,9 +133,10 @@ class Minesweeper:
         for i in range(EASY_GRID):
             easy_row = []
             for j in range(EASY_GRID):
-                easy_tile = tk.Button(frame, borderwidth=1, width = 2, height = 1,
-                                      command = lambda x=i, y=j: self.easy_clicks(x, y) and self.win_condition(EASY_GRID, self.easy_buttons, EASY_TOTAL_TILES, EASY_TOTAL_BOMBS))
+                easy_tile = tk.Button(frame, borderwidth=1, width = 2, height = 1)
                 easy_tile.grid(row = i, column = j, sticky = "NSEW")
+                easy_tile.bind('<Button-1>', lambda event, x=i, y=j: self.left_click(self.easy_clicks, x, y, EASY_GRID, self.easy_buttons, EASY_TOTAL_TILES, EASY_TOTAL_BOMBS))
+                easy_tile.bind('<Button-3>', lambda event, x=i, y=j: self.right_click(x, y, self.easy_buttons))
                 easy_row.append(easy_tile)
             self.easy_buttons.append(easy_row)
 
@@ -156,9 +157,10 @@ class Minesweeper:
         for i in range(MEDIUM_GRID):
             medium_row = []
             for j in range(MEDIUM_GRID):
-                medium_tile = tk.Button(frame, borderwidth=1, width = 2, height = 1,
-                                      command = lambda x=i, y=j: self.medium_clicks(x, y))
+                medium_tile = tk.Button(frame, borderwidth=1, width = 2, height = 1)
                 medium_tile.grid(row = i, column = j, sticky = "NSEW")
+                medium_tile.bind('<Button-1>', lambda event, x=i, y=j: self.left_click(self.medium_clicks, x, y, MEDIUM_GRID, self.medium_buttons, MEDIUM_TOTAL_TILES, MEDIUM_TOTAL_BOMBS))
+                medium_tile.bind('<Button-3>', lambda event, x=i, y=j: self.right_click(x, y, self.medium_buttons))
                 medium_row.append(medium_tile)
             self.medium_buttons.append(medium_row)
 
@@ -179,9 +181,10 @@ class Minesweeper:
         for i in range(HARD_GRID):
             hard_row = []
             for j in range(HARD_GRID):
-                hard_tile = tk.Button(frame, borderwidth=1, width = 2, height = 1,
-                                      command = lambda x=i, y=j: self.hard_clicks(x, y))
+                hard_tile = tk.Button(frame, borderwidth=1, width = 2, height = 1)
                 hard_tile.grid(row = i, column = j, sticky = "NSEW")
+                hard_tile.bind('<Button-1>', lambda event, x=i, y=j: self.left_click(self.hard_clicks, x, y, HARD_GRID, self.hard_buttons, HARD_TOTAL_TILES, HARD_TOTAL_BOMBS))
+                hard_tile.bind('<Button-3>', lambda event, x=i, y=j: self.right_click(x, y, self.hard_buttons))
                 hard_row.append(hard_tile)
             self.hard_buttons.append(hard_row)
 
@@ -211,6 +214,9 @@ class Minesweeper:
         return frame
 
     def easy_clicks(self, i, j):
+        # If the tile if flagged, user cannot reveal it until it is unflagged
+        if self.easy_buttons[i][j]["text"] == "🚩":
+            return
         # It will be the first click if the bombs list is empty
         if len(self.easy_bombs) == 0:
             self.easy_tile_locations = [(i, j) for i  in range(EASY_GRID) for j in range(EASY_GRID)]
@@ -237,6 +243,8 @@ class Minesweeper:
             self.reveal_tiles(i, j, self.easy_bombs, self.easy_buttons, EASY_GRID)
 
     def medium_clicks(self, i, j):
+        if self.medium_buttons[i][j]["text"] == "🚩":
+            return
         if len(self.medium_bombs) == 0:
             self.medium_tile_locations = [(i, j) for i  in range(MEDIUM_GRID) for j in range(MEDIUM_GRID)]
             self.surrounding_tiles = (i, j), (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
@@ -262,6 +270,8 @@ class Minesweeper:
             self.reveal_tiles(i, j, self.medium_bombs, self.medium_buttons, MEDIUM_GRID)
 
     def hard_clicks(self, i, j):
+        if self.hard_buttons[i][j]["text"] == "🚩":
+            return
         if len(self.hard_bombs) == 0:
             self.hard_tile_locations = [(i, j) for i  in range(HARD_GRID) for j in range(HARD_GRID)]
             self.surrounding_tiles = (i, j), (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
@@ -318,6 +328,16 @@ class Minesweeper:
             for i in range(grid_size):
                 for j in range(grid_size):
                     button_type[i][j].config(bg="light green", state="disabled")
+
+    def left_click(self, method, i ,j, grid_size, button_type, total_tile, total_bomb):
+        method(i, j)
+        self.win_condition(grid_size, button_type, total_tile, total_bomb)
+
+    def right_click(self, i, j, button_type):
+        if button_type[i][j]["text"] == "":
+            button_type[i][j].config(text="🚩")
+        elif button_type[i][j]["text"] == "🚩":
+            button_type[i][j].config(text="")
 
 if __name__ == "__main__":
     app = Minesweeper()
