@@ -1,5 +1,6 @@
 # Started on 16/07/25
 # Version 1
+# The goal for Version 1 is to create the main components seen in Minesweeper, such as the grid and tiles.
 
 import tkinter as tk
 import random as r
@@ -21,12 +22,13 @@ class Minesweeper:
         self.root = tk.Tk()
         self.root.title("Minesweeper Game")
 
+        # Container that holds the frames together
         self.container = tk.Frame(self.root)
         self.container.grid(row = 0, column = 0, sticky = "NESW")
         self.container.grid_rowconfigure(0, weight = 1)
         self.container.grid_columnconfigure(0, weight = 1)      
         
-
+        # Dictionary for holding frames created below
         self.frames = {}
         self.frames["PlayFrame"] = self.create_play_frame()
         self.frames["TutorialFrame"] = self.create_tutorial_frame()
@@ -38,18 +40,22 @@ class Minesweeper:
         self.frames["GamemodesFrame"] = self.create_gamemodes_frame()
         self.frames["LeaderboardFrame"] = self.create_leaderboard_frame()
 
+        # Shows the Playing Frame first before any other frames
         self.show_frame("PlayFrame")
-            
+        
+        # Makes the layout responsive e.g. expands proportionally with the window, by changing weight
         self.root.grid_rowconfigure(0, weight = 1)
         self.root.grid_columnconfigure(0, weight = 1)      
         
     def run(self):
         self.root.mainloop()
 
+    # Function to show intended frames by using tkraise which raises a frame to the top of the stack
     def show_frame(self, name):
         frame = self.frames[name]
         frame.tkraise()
 
+    # Creating the contents displayed for the play frame, repeated for each frame
     def create_play_frame(self):
         frame = tk.Frame(self.container)
         frame.grid(row = 0, column = 0, sticky = "NSEW")
@@ -70,6 +76,7 @@ class Minesweeper:
 
         return frame
     
+    # WIP (Work In Progress)
     def create_tutorial_frame(self):
         frame = tk.Frame(self.container)
         frame.grid(row = 0, column = 0, sticky = "NSEW")
@@ -127,16 +134,23 @@ class Minesweeper:
         frame = tk.Frame(self.container)
         frame.grid(row = 0, column = 0, sticky = "NSEW")
 
+        # List for storing the buttons themselves and empty bomb list as the bombs should be generated after the first click
         self.easy_buttons = []
         self.easy_bombs = []
 
+        # Creating 9x9 tiles
         for i in range(EASY_GRID):
+            # Creating 9 rows
             easy_row = []
             for j in range(EASY_GRID):
-                easy_tile = tk.Button(frame, borderwidth=1, width = 2, height = 1)
+                easy_tile = tk.Button(frame, borderwidth=1, width=2, height=1)
                 easy_tile.grid(row = i, column = j, sticky = "NSEW")
+
+                # Binding each tile to left and right click, and passing an event which can be anything but is required
                 easy_tile.bind('<Button-1>', lambda event, x=i, y=j: self.left_click(self.easy_clicks, x, y, EASY_GRID, self.easy_buttons, EASY_TOTAL_TILES, EASY_TOTAL_BOMBS))
                 easy_tile.bind('<Button-3>', lambda event, x=i, y=j: self.right_click(x, y, self.easy_buttons))
+                
+                # Appends 9 columns to the 9 rows, giving the 81 intended buttons 
                 easy_row.append(easy_tile)
             self.easy_buttons.append(easy_row)
 
@@ -157,7 +171,7 @@ class Minesweeper:
         for i in range(MEDIUM_GRID):
             medium_row = []
             for j in range(MEDIUM_GRID):
-                medium_tile = tk.Button(frame, borderwidth=1, width = 2, height = 1)
+                medium_tile = tk.Button(frame, borderwidth=1, width=2, height=1)
                 medium_tile.grid(row = i, column = j, sticky = "NSEW")
                 medium_tile.bind('<Button-1>', lambda event, x=i, y=j: self.left_click(self.medium_clicks, x, y, MEDIUM_GRID, self.medium_buttons, MEDIUM_TOTAL_TILES, MEDIUM_TOTAL_BOMBS))
                 medium_tile.bind('<Button-3>', lambda event, x=i, y=j: self.right_click(x, y, self.medium_buttons))
@@ -181,7 +195,7 @@ class Minesweeper:
         for i in range(HARD_GRID):
             hard_row = []
             for j in range(HARD_GRID):
-                hard_tile = tk.Button(frame, borderwidth=1, width = 2, height = 1)
+                hard_tile = tk.Button(frame, borderwidth=1, width=2, height=1)
                 hard_tile.grid(row = i, column = j, sticky = "NSEW")
                 hard_tile.bind('<Button-1>', lambda event, x=i, y=j: self.left_click(self.hard_clicks, x, y, HARD_GRID, self.hard_buttons, HARD_TOTAL_TILES, HARD_TOTAL_BOMBS))
                 hard_tile.bind('<Button-3>', lambda event, x=i, y=j: self.right_click(x, y, self.hard_buttons))
@@ -194,19 +208,21 @@ class Minesweeper:
             frame.grid_columnconfigure(j, weight = 1)
 
         return frame
-
+    # WIP
     def create_custom_frame(self):
         frame = tk.Frame(self.container)
         frame.grid(row = 0, column = 0, sticky = "NSEW")
 
         return frame
     
+    # WIP
     def create_gamemodes_frame(self):
         frame = tk.Frame(self.container)
         frame.grid(row = 0, column = 0, sticky = "NSEW")
 
         return frame
 
+    # WIP
     def create_leaderboard_frame(self):
         frame = tk.Frame(self.container)
         frame.grid(row = 0, column = 0, sticky = "NSEW")
@@ -219,20 +235,23 @@ class Minesweeper:
             return
         # It will be the first click if the bombs list is empty
         if len(self.easy_bombs) == 0:
+            # Creates location for each tile, frim (0, 0) to (8, 8), and creating the tiles that excludes where the bombs can be generated
             self.easy_tile_locations = [(i, j) for i  in range(EASY_GRID) for j in range(EASY_GRID)]
             self.surrounding_tiles = (i, j), (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
             easy_excluded_tiles = []
             for x, y in self.surrounding_tiles:
                 if 0 <= x < EASY_GRID and 0 <= y < EASY_GRID:
                     easy_excluded_tiles.append((x, y))
+            # Checking surrounding tiles, and if it is within bounds it will be appended to the excluded tiles. The safe tiles are every tile except the excluded tiles
             easy_safe_tiles = []
             for tile in self.easy_tile_locations:
                 if tile not in easy_excluded_tiles:
                     easy_safe_tiles.append(tile)
+            # Generating bombs from safe tiles, where k is equal to the number of bombs generated
             self.easy_bombs = r.sample(easy_safe_tiles, k=EASY_TOTAL_BOMBS)
 
         print(f"You clicked: ({i}, {j})") # For Debugging
-        if (i, j) in self.easy_bombs:
+        if (i, j) in self.easy_bombs and not self.easy_buttons[i][j]["state"] == "disabled":
             print("Bomb")
             for (i, j) in self.easy_bombs:
                 self.easy_buttons[i][j].config(text="💣")
@@ -259,7 +278,7 @@ class Minesweeper:
             self.medium_bombs = r.sample(medium_safe_tiles, k=MEDIUM_TOTAL_BOMBS)
 
         print(f"You clicked: ({i}, {j})") # For Debugging
-        if (i, j) in self.medium_bombs:
+        if (i, j) in self.medium_bombs and not self.medium_buttons[i][j]["state"] == "disabled":
             print("Bomb")
             for (i, j) in self.medium_bombs:
                 self.medium_buttons[i][j].config(text="💣")
@@ -286,7 +305,7 @@ class Minesweeper:
             self.hard_bombs = r.sample(hard_safe_tiles, k=HARD_TOTAL_BOMBS)
 
         print(f"You clicked: ({i}, {j})") # For Debugging
-        if (i, j) in self.hard_bombs:
+        if (i, j) in self.hard_bombs and not self.easy_buttons[i][j]["state"] == "disabled":
             print("Bomb")
             for (i, j) in self.hard_bombs:
                 self.hard_buttons[i][j].config(text="💣")
@@ -296,8 +315,9 @@ class Minesweeper:
             print("Safe")
             self.reveal_tiles(i, j, self.hard_bombs, self.hard_buttons, HARD_GRID)
 
+    # Function that calculates tile number counter and reveals valid tiles
     def reveal_tiles(self, i, j, bomb_type, button_type, grid_size):
-        # Boundaries
+        # Boundaries so that recursion does not break the program
         if i < 0 or i >= grid_size or j < 0 or j >= grid_size:
             return
         if (i, j) in bomb_type:
@@ -305,6 +325,7 @@ class Minesweeper:
         if button_type[i][j]["state"] == "disabled":
             return
 
+        # Reveals the tile
         button_type[i][j].config(bg="light grey", state="disabled")
         counter = 0
         neighboring_tiles = (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
@@ -315,8 +336,10 @@ class Minesweeper:
             button_type[i][j].config(text=counter)
         else:
             for x, y in neighboring_tiles:
+                # This is known as recursion, calling a function on itself and it repeats until one of the boundaries are triggered
                 self.reveal_tiles(x, y, bomb_type, button_type, grid_size)
 
+    # Counts the number of revealed tiles, if it is equal to the total tiles minus the total bombs, the tile backgrounds turn green
     def win_condition(self, grid_size, button_type, total_tile, total_bomb):
         tile_counter = 0
         for i in range(grid_size):
@@ -328,15 +351,19 @@ class Minesweeper:
             for i in range(grid_size):
                 for j in range(grid_size):
                     button_type[i][j].config(bg="light green", state="disabled")
+                    if button_type[i][j]["text"] == "🚩":
+                        button_type[i][j].config(state="disabled")
 
+    # Running functions relevant to left-clicks
     def left_click(self, method, i ,j, grid_size, button_type, total_tile, total_bomb):
         method(i, j)
         self.win_condition(grid_size, button_type, total_tile, total_bomb)
 
+    # Places flag if the tile text is empty and not disabed, and removing flags if the tile text is a flag and the tile is not disabled
     def right_click(self, i, j, button_type):
-        if button_type[i][j]["text"] == "":
+        if button_type[i][j]["text"] == "" and not button_type[i][j]["state"] == "disabled":
             button_type[i][j].config(text="🚩")
-        elif button_type[i][j]["text"] == "🚩":
+        elif button_type[i][j]["text"] == "🚩" and not button_type[i][j]["state"] == "disabled":
             button_type[i][j].config(text="")
 
 if __name__ == "__main__":
