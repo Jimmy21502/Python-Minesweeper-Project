@@ -1,6 +1,6 @@
 # Started on 16/07/25
 # Version 2
-# The goal for Version 2
+# The goal for Version 2 is to add Minesweeper UI, such as timer, flag counter, etc, and adding tutorial and replayability.
 
 import tkinter as tk
 import random as r
@@ -25,6 +25,9 @@ class Minesweeper:
         self.easy_timer_count = None
         self.medium_timer_count = None
         self.hard_timer_count = None
+        self.easy_flag_counter = EASY_TOTAL_BOMBS
+        self.medium_flag_counter = MEDIUM_TOTAL_BOMBS
+        self.hard_flag_counter = HARD_TOTAL_BOMBS
 
         # Container that holds the frames together
         self.container = tk.Frame(self.root)
@@ -153,13 +156,13 @@ class Minesweeper:
         self.easy_timer = tk.Label(self.header_frame, text="Timer: 0")
         self.easy_timer.grid(row=0, column=3, padx=5)
 
-        self.easy_reset_game = tk.Button(self.header_frame, text="Reset", command = lambda: [self.reset(EASY_GRID, self.easy_buttons), self.stop_timer(self.easy_timer_count)])
+        self.easy_reset_game = tk.Button(self.header_frame, text="Reset", command = lambda: [self.reset(EASY_GRID, self.easy_buttons, self.easy_bombs, self.easy_flag, EASY_TOTAL_BOMBS), self.stop_timer(self.easy_timer_count)])
         self.easy_reset_game.grid(row=0, column=2, padx=5)
 
         self.easy_flag = tk.Label(self.header_frame, text="🚩: 10")
         self.easy_flag.grid(row=0, column=0, padx=5)
 
-        self.menu = tk.Button(self.header_frame, text="Menu", command = lambda: self.show_frame("MainFrame"))
+        self.menu = tk.Button(self.header_frame, text="Menu", command = lambda: [self.show_frame("MainFrame"), self.reset(EASY_GRID, self.easy_buttons, self.easy_bombs, self.easy_flag, EASY_TOTAL_BOMBS), self.stop_timer(self.easy_timer_count)])
         self.menu.grid(row=0, column=5, padx=5)
         
         self.header_frame.grid_columnconfigure(1, weight = 1)
@@ -202,19 +205,19 @@ class Minesweeper:
         self.medium_frame.grid(row = 0, column = 0, sticky = "NSEW")
 
         self.header_frame = tk.Frame(self.medium_frame)
-        self.header_frame.grid(row=0, column=0, sticky = "NE")
+        self.header_frame.grid(row=0, column=0, sticky = "EW")
 
         self.medium_timer = tk.Label(self.header_frame, text="Timer: 0")
-        self.medium_timer.grid(row=0, column=0)
+        self.medium_timer.grid(row=0, column=3, padx=5)
 
-        self.medium_reset_game = tk.Button(self.header_frame, text="Reset", command = lambda: [self.reset(MEDIUM_GRID, self.medium_buttons), self.stop_timer(self.medium_timer_count)])
-        self.medium_reset_game.grid(row=0, column=1)
+        self.medium_reset_game = tk.Button(self.header_frame, text="Reset", command = lambda: [self.reset(MEDIUM_GRID, self.medium_buttons, self.medium_bombs, self.medium_flag, MEDIUM_TOTAL_BOMBS), self.stop_timer(self.medium_timer_count)])
+        self.medium_reset_game.grid(row=0, column=2, padx=5)
 
         self.medium_flag = tk.Label(self.header_frame, text="🚩: 40")
-        self.medium_flag.grid(row=0, column=2, sticky="W")
+        self.medium_flag.grid(row=0, column=0, sticky="W", padx=5)
 
-        self.menu = tk.Button(self.header_frame, text="Menu", command = lambda: self.show_frame("MainFrame"))
-        self.menu.grid(row=0, column=3, sticky="E")
+        self.menu = tk.Button(self.header_frame, text="Menu", command = lambda: [self.show_frame("MainFrame"), self.reset(MEDIUM_GRID, self.medium_buttons, self.medium_bombs, self.medium_flag, MEDIUM_TOTAL_BOMBS), self.stop_timer(self.medium_timer_count)])
+        self.menu.grid(row=0, column=5, sticky="E", padx=5)
         
         self.header_frame.grid_columnconfigure(1, weight = 1)
         self.header_frame.grid_columnconfigure(4, weight = 1)
@@ -249,19 +252,19 @@ class Minesweeper:
         self.hard_frame.grid(row = 0, column = 0, sticky = "NSEW")
 
         self.header_frame = tk.Frame(self.hard_frame)
-        self.header_frame.grid(row=0, column=0, sticky = "NE")
+        self.header_frame.grid(row=0, column=0, sticky = "EW")
 
         self.hard_timer = tk.Label(self.header_frame, text="Timer")
-        self.hard_timer.grid(row=0, column=0)
+        self.hard_timer.grid(row=0, column=3, padx=5)
 
-        self.hard_reset_game = tk.Button(self.header_frame, text="Reset", command = lambda: [self.reset(HARD_GRID, self.hard_buttons), self.stop_timer(self.hard_timer_count)])
-        self.hard_reset_game.grid(row=0, column=1)
+        self.hard_reset_game = tk.Button(self.header_frame, text="Reset", command = lambda: [self.reset(HARD_GRID, self.hard_buttons, self.hard_bombs, self.hard_flag, HARD_TOTAL_BOMBS), self.stop_timer(self.hard_timer_count)])
+        self.hard_reset_game.grid(row=0, column=2, padx=5)
 
         self.hard_flag = tk.Label(self.header_frame, text="🚩: 80")
-        self.hard_flag.grid(row=0, column=2)
+        self.hard_flag.grid(row=0, column=0, padx=5)
 
-        self.menu = tk.Button(self.header_frame, text="Menu", command = lambda: self.show_frame("MainFrame"))
-        self.menu.grid(row=0, column=3)
+        self.menu = tk.Button(self.header_frame, text="Menu", command = lambda: [self.show_frame("MainFrame"), self.reset(HARD_GRID, self.hard_buttons, self.hard_bombs, self.hard_flag, HARD_TOTAL_BOMBS), self.stop_timer(self.hard_timer_count)])
+        self.menu.grid(row=0, column=5, padx=5)
 
         self.header_frame.grid_columnconfigure(1, weight = 1)
         self.header_frame.grid_columnconfigure(4, weight = 1)
@@ -454,13 +457,38 @@ class Minesweeper:
     def right_click(self, i, j, button_type):
         if button_type[i][j]["text"] == "" and not button_type[i][j]["state"] == "disabled":
             button_type[i][j].config(text="🚩")
+            if self.current_mode == "easy":
+                self.easy_flag_counter -= 1
+                self.easy_flag.config(text=f"🚩: {self.easy_flag_counter}")
+
+            elif self.current_mode == "medium":
+                self.medium_flag_counter -= 1
+                self.medium_flag.config(text=f"🚩: {self.medium_flag_counter}")
+
+            elif self.current_mode == "hard":
+                self.hard_flag_counter -= 1
+                self.hard_flag.config(text=f"🚩: {self.hard_flag_counter}")
+
         elif button_type[i][j]["text"] == "🚩" and not button_type[i][j]["state"] == "disabled":
             button_type[i][j].config(text="")
+            if self.current_mode == "easy":
+                self.easy_flag_counter += 1
+                self.easy_flag.config(text=f"🚩: {self.easy_flag_counter}")
 
-    def reset(self, grid_size, button_type):
-        self.easy_bombs = []
-        self.medium_bombs = []
-        self.hard_bombs = []
+            elif self.current_mode == "medium":
+                self.medium_flag_counter += 1
+                self.medium_flag.config(text=f"🚩: {self.medium_flag_counter}")
+
+            elif self.current_mode == "hard":
+                self.hard_flag_counter += 1
+                self.hard_flag.config(text=f"🚩: {self.hard_flag_counter}")
+
+    def reset(self, grid_size, button_type, bomb_type, flag_type, total_bomb):
+        bomb_type.clear()
+        self.easy_flag_counter = EASY_TOTAL_BOMBS
+        self.medium_flag_counter = MEDIUM_TOTAL_BOMBS
+        self.hard_flag_counter = HARD_TOTAL_BOMBS
+        flag_type.config(text=f"🚩: {total_bomb}")
 
         for i in range(grid_size):
             for j in range(grid_size):
@@ -489,7 +517,8 @@ class Minesweeper:
             self.hard_timer_count = self.root.after(1000, self.update_timer)
 
     def stop_timer(self, timer_type):
-        self.root.after_cancel(timer_type)
+        if timer_type:
+            self.root.after_cancel(timer_type)
 
 if __name__ == "__main__":
     app = Minesweeper()
