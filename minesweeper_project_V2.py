@@ -28,6 +28,7 @@ class Minesweeper:
         self.easy_flag_counter = EASY_TOTAL_BOMBS
         self.medium_flag_counter = MEDIUM_TOTAL_BOMBS
         self.hard_flag_counter = HARD_TOTAL_BOMBS
+        self.tutorial_counter = 0
 
         # Container that holds the frames together
         self.container = tk.Frame(self.root)
@@ -94,13 +95,43 @@ class Minesweeper:
     
     # WIP (Work In Progress)
     def create_tutorial_frame(self):
-        frame = tk.Frame(self.container)
-        frame.grid(row = 0, column = 0, sticky = "NSEW")
+        self.tutorial_frame = tk.Frame(self.container)
+        self.tutorial_frame.grid(row = 0, column = 0, sticky = "NSEW")
 
-        title_label = tk.Label(frame, text="Tutorial", font="Verdana 22 bold")
-        title_label.grid(row = 0, column = 0, columnspan = 2)
+        self.header_frame = tk.Frame(self.tutorial_frame)
+        self.header_frame.grid(row = 0, column = 0, sticky = "EW")
 
-        return frame
+        self.tutorial_label = tk.Label(self.header_frame, text="""Welcome, the goal of Minesweeper is to 
+click on every tile that does not contain a bomb. (Click to continue)""")
+        self.tutorial_label.grid(row = 0, column = 1, sticky="NSEW", pady=5)
+        
+        self.header_frame.grid_columnconfigure(0, weight = 1)
+        self.header_frame.grid_columnconfigure(2, weight = 1)
+
+        self.grid_frame = tk.Frame(self.tutorial_frame)
+        self.grid_frame.grid(row = 1, column = 0, sticky = "NSEW")
+        
+        self.tutorial_bombs = []
+        self.tutorial_buttons = []
+
+        for i in range(EASY_GRID):
+            tutorial_row = []
+            for j in range(EASY_GRID):
+                tutorial_tile = tk.Button(self.grid_frame, borderwidth=1, width=2, height=1)
+                tutorial_tile.grid(row = i, column = j, sticky = "NSEW")
+                tutorial_tile.bind('<Button-1>', lambda event, x=i, y=j: self.tutorial_clicks(x, y))
+
+                tutorial_row.append(tutorial_tile)
+            self.tutorial_buttons.append(tutorial_row)
+                
+        for i in range(EASY_GRID):
+            self.grid_frame.grid_rowconfigure(i, weight = 1)
+            self.grid_frame.grid_columnconfigure(i, weight = 1)
+
+        self.tutorial_frame.grid_rowconfigure(1, weight = 1)
+        self.tutorial_frame.grid_columnconfigure(0, weight = 1)
+
+        return self.tutorial_frame
 
     def create_main_frame(self):
         frame = tk.Frame(self.container)
@@ -313,6 +344,34 @@ class Minesweeper:
         frame.grid(row = 0, column = 0, sticky = "NSEW")
 
         return frame
+
+    def tutorial_clicks(self, i, j):
+        if "<Button-1>" and self.tutorial_counter == 3:
+            for i in range(EASY_GRID):
+                for j in range(EASY_GRID):
+                    self.tutorial_buttons[i][j].config(bg="SystemButtonFace", text="")
+            self.tutorial_label.config(text="""""")
+
+        if "<Button-1>" and self.tutorial_counter == 2:
+            for x, y in self.neighboring_tiles:
+                self.tutorial_buttons[x][y].config(bg="red")
+            self.tutorial_label.config(text="""Therefore, one of these tiles highlighted red must be a bomb.
+(Click to continue)""")
+            self.tutorial_counter = 3
+                
+        if i == 4 and j == 4 and self.tutorial_counter == 1:
+            self.tutorial_buttons[i][j].config(text="1")
+            self.tutorial_label.config(text="""The number on the tile represents the number of bombs surrounding that tile.
+(Click to continue)""")
+            self.neighboring_tiles = (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
+            self.tutorial_counter = 2
+            print(self.tutorial_counter)
+
+        if "<Button-1>" and self.tutorial_counter == 0:
+            self.tutorial_buttons[4][4].config(bg="light green")
+            self.tutorial_label.config(text="Try revealing a tile, click on the tile highlighted green.")
+            self.tutorial_counter = 1
+            print(self.tutorial_counter)
 
     def easy_clicks(self, i, j):
         # If the tile if flagged, user cannot reveal it until it is unflagged
