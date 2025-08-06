@@ -120,6 +120,7 @@ click on every tile that does not contain a bomb. (Click to continue)""")
                 tutorial_tile = tk.Button(self.grid_frame, borderwidth=1, width=2, height=1)
                 tutorial_tile.grid(row = i, column = j, sticky = "NSEW")
                 tutorial_tile.bind('<Button-1>', lambda event, x=i, y=j: self.tutorial_clicks(x, y))
+                tutorial_tile.bind('<Button-3>', lambda event, x=i, y=j: self.tutorial_clicks(x, y))
 
                 tutorial_row.append(tutorial_tile)
             self.tutorial_buttons.append(tutorial_row)
@@ -182,7 +183,7 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         self.easy_frame.grid(row = 0, column = 0, sticky = "NSEW")
 
         self.header_frame = tk.Frame(self.easy_frame)
-        self.header_frame.grid(row=0, column=0, sticky = "EW")
+        self.header_frame.grid(row=0, column=0, sticky = "EW", pady=5)
 
         self.easy_timer = tk.Label(self.header_frame, text="Timer: 0")
         self.easy_timer.grid(row=0, column=3, padx=5)
@@ -236,7 +237,7 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         self.medium_frame.grid(row = 0, column = 0, sticky = "NSEW")
 
         self.header_frame = tk.Frame(self.medium_frame)
-        self.header_frame.grid(row=0, column=0, sticky = "EW")
+        self.header_frame.grid(row=0, column=0, sticky = "EW", pady=5)
 
         self.medium_timer = tk.Label(self.header_frame, text="Timer: 0")
         self.medium_timer.grid(row=0, column=3, padx=5)
@@ -283,7 +284,7 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         self.hard_frame.grid(row = 0, column = 0, sticky = "NSEW")
 
         self.header_frame = tk.Frame(self.hard_frame)
-        self.header_frame.grid(row=0, column=0, sticky = "EW")
+        self.header_frame.grid(row=0, column=0, sticky = "EW", pady=5)
 
         self.hard_timer = tk.Label(self.header_frame, text="Timer")
         self.hard_timer.grid(row=0, column=3, padx=5)
@@ -346,13 +347,44 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         return frame
 
     def tutorial_clicks(self, i, j):
-        if "<Button-1>" and self.tutorial_counter == 3:
+        if self.tutorial_counter == 7:
+            self.show_frame("EasyFrame")
+
+        if self.tutorial_counter == 6:
+            self.tutorial_label.config(text="""Now that you've got the basics down, you are ready to attempt the real game.
+(Click to continue)""")
+            self.tutorial_counter = 7
+
+        if i == 1 and j == 7 and "<ButtonPress-3>" and self.tutorial_counter == 5:
+            self.tutorial_buttons[i][j].config(bg="SystemButtonFace")
+            self.tutorial_buttons[0][8].config(bg="light grey")
+            self.tutorial_buttons[i][j].config(text="🚩")
+            self.tutorial_buttons[0][6].config(bg="light green")
+            self.tutorial_buttons[1][6].config(bg="light green")
+            self.tutorial_buttons[2][8].config(bg="light green")
+            self.tutorial_buttons[2][7].config(bg="light green")
+            self.tutorial_label.config(text="""The green tiles must be safe to reveal because the tiles numbered 1 are already 
+touching a bomb, so the surrounding tiles must be safe. (Click to continue)""")
+            self.tutorial_counter = 6
+            
+        if "<ButtonPress-1>" and self.tutorial_counter == 4:
+            self.tutorial_label.config(text="""You should flag tiles which you think are bombs, flags can be used to 
+keep track of where bombs are. Try right-clicking on the red tile to place a flag.""")
+            self.tutorial_counter = 5
+
+        if "<ButtonPress-1>" and self.tutorial_counter == 3:
             for i in range(EASY_GRID):
                 for j in range(EASY_GRID):
                     self.tutorial_buttons[i][j].config(bg="SystemButtonFace", text="")
-            self.tutorial_label.config(text="""""")
+            self.tutorial_buttons[0][8].config(text="1", bg="light green")
+            self.tutorial_buttons[0][7].config(text="1", bg="light grey")
+            self.tutorial_buttons[1][8].config(text="1", bg="light grey")
+            self.tutorial_buttons[1][7].config(bg="red")
+            self.tutorial_label.config(text="""In this scenario, the green tile is touching one bomb. It is also only touching 
+one tile, therefore the tile highlighted red must be a bomb. (Click to continue)""")
+            self.tutorial_counter = 4
 
-        if "<Button-1>" and self.tutorial_counter == 2:
+        if "<ButtonPress-1>" and self.tutorial_counter == 2:
             for x, y in self.neighboring_tiles:
                 self.tutorial_buttons[x][y].config(bg="red")
             self.tutorial_label.config(text="""Therefore, one of these tiles highlighted red must be a bomb.
@@ -365,13 +397,12 @@ click on every tile that does not contain a bomb. (Click to continue)""")
 (Click to continue)""")
             self.neighboring_tiles = (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
             self.tutorial_counter = 2
-            print(self.tutorial_counter)
 
-        if "<Button-1>" and self.tutorial_counter == 0:
+        if "<ButtonPress-1>" and self.tutorial_counter == 0:
             self.tutorial_buttons[4][4].config(bg="light green")
-            self.tutorial_label.config(text="Try revealing a tile, click on the tile highlighted green.")
+            self.tutorial_label.config(text="""Try revealing a tile. 
+(Click on the tile highlighted green to continue)""")
             self.tutorial_counter = 1
-            print(self.tutorial_counter)
 
     def easy_clicks(self, i, j):
         # If the tile if flagged, user cannot reveal it until it is unflagged
