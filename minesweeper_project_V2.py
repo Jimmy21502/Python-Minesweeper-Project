@@ -29,7 +29,6 @@ class Minesweeper:
         self.easy_flag_counter = EASY_TOTAL_BOMBS
         self.medium_flag_counter = MEDIUM_TOTAL_BOMBS
         self.hard_flag_counter = HARD_TOTAL_BOMBS
-        self.custom_flag_counter = 0
         self.tutorial_counter = 0
 
         # Container that holds the frames together
@@ -124,8 +123,8 @@ click on every tile that does not contain a bomb. (Click to continue)""")
             for j in range(EASY_GRID):
                 tutorial_tile = tk.Button(self.grid_frame, borderwidth=1, width=2, height=1)
                 tutorial_tile.grid(row = i, column = j, sticky = "NSEW")
-                tutorial_tile.bind('<Button-1>', lambda event, x=i, y=j: self.tutorial_clicks(x, y))
-                tutorial_tile.bind('<Button-3>', lambda event, x=i, y=j: self.tutorial_clicks(x, y))
+                tutorial_tile.bind('<Button-1>', lambda event, x=i, y=j: self.tutorial_clicks(event, x, y))
+                tutorial_tile.bind('<Button-3>', lambda event, x=i, y=j: self.tutorial_clicks(event, x, y))
 
                 tutorial_row.append(tutorial_tile)
             self.tutorial_buttons.append(tutorial_row)
@@ -335,12 +334,12 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         self.custom_setting_frame = tk.Frame(self.container)
         self.custom_setting_frame.grid(row=0, column=0, sticky = "NSEW")
 
-        self.rows_label = tk.Label(self.custom_setting_frame, text="Rows (32 max): ")
+        self.rows_label = tk.Label(self.custom_setting_frame, text="Rows (8 min / 20 max): ")
         self.rows_label.grid(row=0, column=0)
         self.row_entry = tk.Entry(self.custom_setting_frame)
         self.row_entry.grid(row=0, column=1)
 
-        self.columns_label = tk.Label(self.custom_setting_frame, text="Columns (16 max): ")
+        self.columns_label = tk.Label(self.custom_setting_frame, text="Columns (8 min / 32 max): ")
         self.columns_label.grid(row=1, column=0)
         self.column_entry = tk.Entry(self.custom_setting_frame)
         self.column_entry.grid(row=1, column=1)
@@ -350,7 +349,7 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         self.bomb_entry = tk.Entry(self.custom_setting_frame)
         self.bomb_entry.grid(row=2, column=1)
 
-        self.start_button = tk.Button(self.custom_setting_frame, text="Start Game", command = lambda: self.show_frame("CustomFrame"))
+        self.start_button = tk.Button(self.custom_setting_frame, text="Start Game", command = self.create_custom_frame)
         self.start_button.grid(row=3, column=0, columnspan=2)
 
         return self.custom_setting_frame
@@ -360,28 +359,30 @@ click on every tile that does not contain a bomb. (Click to continue)""")
             self.custom_rows = int(self.row_entry.get())
             self.custom_columns = int(self.column_entry.get())
             self.custom_total_bombs = int(self.bomb_entry.get())
+            self.custom_flag_counter = self.custom_total_bombs
+
         except ValueError:
             return
         
-        if self.custom_rows < 8 or self.custom_rows > 32 or self.custom_columns < 8 or self.custom_columns > 16:
+        if self.custom_rows < 8 or self.custom_rows > 20 or self.custom_columns < 8 or self.custom_columns > 32:
             return
         
-        if self.custom_bombs >= (self.custom_rows*self.custom_columns):
+        if self.custom_total_bombs > int((self.custom_rows*self.custom_columns)/(10/3)) or self.custom_total_bombs < 10:
             return
         
         self.custom_frame = tk.Frame(self.container)
         self.custom_frame.grid(row=0, column=0, sticky = "NSEW")
 
-        self.header_frame = tk.Frame(self.hard_frame)
+        self.header_frame = tk.Frame(self.custom_frame)
         self.header_frame.grid(row=0, column=0, sticky = "EW", pady=5)
 
         self.custom_timer = tk.Label(self.header_frame, text="Timer: 0")
-        self.hard_timer.grid(row=0, column=3, padx=5)
+        self.custom_timer.grid(row=0, column=3, padx=5)
 
-        self.custom_reset_game = tk.Button(self.header_frame, text="Reset", command = lambda: [self.reset(HARD_GRID, HARD_GRID, self.hard_buttons, self.hard_bombs, self.hard_flag, HARD_TOTAL_BOMBS), self.stop_timer(self.hard_timer_count)])
-        self.hard_reset_game.grid(row=0, column=2, padx=5)
+        self.custom_reset_game = tk.Button(self.header_frame, text="Reset", command = lambda: [self.reset(self.custom_rows, self.custom_columns, self.custom_buttons, self.custom_bombs, self.custom_flag, self.custom_total_bombs), self.stop_timer(self.custom_timer_count)])
+        self.custom_reset_game.grid(row=0, column=2, padx=5)
 
-        self.custom_flag = tk.Label(self.header_frame, text="🚩: 80")
+        self.custom_flag = tk.Label(self.header_frame, text=f"🚩: {self.custom_total_bombs}")
         self.custom_flag.grid(row=0, column=0, padx=5)
 
         self.menu = tk.Button(self.header_frame, text="Menu", command = lambda: [self.show_frame("MainFrame"), self.reset(HARD_GRID, HARD_GRID, self.hard_buttons, self.hard_bombs, self.hard_flag, HARD_TOTAL_BOMBS), self.stop_timer(self.hard_timer_count)])
@@ -390,7 +391,7 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         self.header_frame.grid_columnconfigure(1, weight = 1)
         self.header_frame.grid_columnconfigure(4, weight = 1)
 
-        self.grid_frame = tk.Frame(self.hard_frame)
+        self.grid_frame = tk.Frame(self.custom_frame)
         self.grid_frame.grid(row=1, column=0, sticky = "NSEW")
 
         self.custom_buttons = []
@@ -401,30 +402,32 @@ click on every tile that does not contain a bomb. (Click to continue)""")
             for j in range(self.custom_columns):
                 custom_tile = tk.Button(self.grid_frame, borderwidth=1, width=2, height=1)
                 custom_tile.grid(row = i, column = j, sticky = "NSEW")
-                custom_tile.bind('<Button-1>', lambda event, x=i, y=j: self.left_click(self.custom_clicks, x, y, HARD_GRID, HARD_GRID, self.hard_buttons, (self.custom_columns*self.custom_rows), self.custom_total_bombs, self.custom_timer_count))
+                custom_tile.bind('<Button-1>', lambda event, x=i, y=j: self.left_click(self.custom_clicks, x, y, self.custom_rows, self.custom_columns, self.custom_buttons, (self.custom_columns*self.custom_rows), self.custom_total_bombs, self.custom_timer_count))
                 custom_tile.bind('<Button-3>', lambda event, x=i, y=j: self.right_click(x, y, self.custom_buttons))
                 custom_row.append(custom_tile)
-            self.hard_buttons.append(custom_tile)
-
-        self.grid_frame.grid_rowconfigure(self.custom_rows, weight = 1)
-        self.grid_frame.grid_columnconfigure(self.custom_columns, weight = 1)
+            self.custom_buttons.append(custom_row)
+        
+        for i in range(self.custom_rows):
+            self.grid_frame.grid_rowconfigure(i, weight = 1)
+        for j in range(self.custom_columns):
+            self.grid_frame.grid_columnconfigure(j, weight = 1)
 
         self.custom_frame.grid_rowconfigure(1, weight = 1)
         self.custom_frame.grid_columnconfigure(0, weight = 1)
 
         return self.custom_frame
     
-    def custom_clicks(self):
+    def custom_clicks(self, i, j):
         self.current_mode = "custom"
         if self.custom_buttons[i][j]["text"] == "🚩":
             return
         if len(self.custom_bombs) == 0:
             self.start_timer()
-            self.custom_tile_locations = [(i, j) for i  in range(MEDIUM_GRID) for j in range(MEDIUM_GRID)]
+            self.custom_tile_locations = [(i, j) for i  in range(self.custom_rows) for j in range(self.custom_columns)]
             self.surrounding_tiles = (i, j), (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
             custom_excluded_tiles = []
             for x, y in self.surrounding_tiles:
-                if 0 <= x < MEDIUM_GRID and 0 <= y < MEDIUM_GRID:
+                if 0 <= x < self.custom_rows and 0 <= y < self.custom_columns:
                     custom_excluded_tiles.append((x, y))
             custom_safe_tiles = []
             for tile in self.custom_tile_locations:
@@ -439,11 +442,11 @@ click on every tile that does not contain a bomb. (Click to continue)""")
             for (i, j) in self.custom_bombs:
                 self.custom_buttons[i][j].config(text="💣")
             for (i, j) in self.custom_tile_locations:
-                self.medium_buttons[i][j].config(bg="red", state="disabled")
+                self.custom_buttons[i][j].config(bg="red", state="disabled")
         else:
             print("Safe")
             self.reveal_tiles(i, j, self.custom_bombs, self.custom_buttons, self.custom_rows, self.custom_columns)
-    
+
     # WIP
     def create_gamemodes_frame(self):
         frame = tk.Frame(self.container)
@@ -458,16 +461,16 @@ click on every tile that does not contain a bomb. (Click to continue)""")
 
         return frame
 
-    def tutorial_clicks(self, i, j):
-        if self.tutorial_counter == 7:
+    def tutorial_clicks(self, event, i, j):
+        if self.tutorial_counter == 7 and event.num == 1:
             self.show_frame("EasyFrame")
 
-        if self.tutorial_counter == 6:
+        if self.tutorial_counter == 6 and event.num == 1:
             self.tutorial_label.config(text="""Now that you've got the basics down, you are ready to attempt the real game.
 (Click to continue)""")
             self.tutorial_counter = 7
 
-        if i == 1 and j == 7 and "<ButtonPress-3>" and self.tutorial_counter == 5:
+        if i == 1 and j == 7 and event.num == 3 and self.tutorial_counter == 5:
             self.tutorial_buttons[i][j].config(bg="SystemButtonFace")
             self.tutorial_buttons[0][8].config(bg="light grey")
             self.tutorial_buttons[i][j].config(text="🚩")
@@ -479,12 +482,12 @@ click on every tile that does not contain a bomb. (Click to continue)""")
 touching a bomb, so the surrounding tiles must be safe. (Click to continue)""")
             self.tutorial_counter = 6
             
-        if "<ButtonPress-1>" and self.tutorial_counter == 4:
+        if event.num == 1 and self.tutorial_counter == 4:
             self.tutorial_label.config(text="""You should flag tiles which you think are bombs, flags can be used to 
 keep track of where bombs are. Try right-clicking on the red tile to place a flag.""")
             self.tutorial_counter = 5
 
-        if "<ButtonPress-1>" and self.tutorial_counter == 3:
+        if event.num == 1 and self.tutorial_counter == 3:
             for i in range(EASY_GRID):
                 for j in range(EASY_GRID):
                     self.tutorial_buttons[i][j].config(bg="SystemButtonFace", text="")
@@ -496,21 +499,21 @@ keep track of where bombs are. Try right-clicking on the red tile to place a fla
 one tile, therefore the tile highlighted red must be a bomb. (Click to continue)""")
             self.tutorial_counter = 4
 
-        if "<ButtonPress-1>" and self.tutorial_counter == 2:
+        if event.num == 1 and self.tutorial_counter == 2:
             for x, y in self.neighboring_tiles:
                 self.tutorial_buttons[x][y].config(bg="red")
             self.tutorial_label.config(text="""Therefore, one of these tiles highlighted red must be a bomb.
 (Click to continue)""")
             self.tutorial_counter = 3
                 
-        if i == 4 and j == 4 and self.tutorial_counter == 1:
+        if i == 4 and j == 4 and self.tutorial_counter == 1 and event.num == 1:
             self.tutorial_buttons[i][j].config(text="1")
             self.tutorial_label.config(text="""The number on the tile represents the number of bombs surrounding that tile.
 (Click to continue)""")
             self.neighboring_tiles = (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
             self.tutorial_counter = 2
 
-        if "<ButtonPress-1>" and self.tutorial_counter == 0:
+        if event.num == 1 and self.tutorial_counter == 0:
             self.tutorial_buttons[4][4].config(bg="light green")
             self.tutorial_label.config(text="""Try revealing a tile. 
 (Click on the tile highlighted green to continue)""")
@@ -671,6 +674,10 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
                 self.hard_flag_counter -= 1
                 self.hard_flag.config(text=f"🚩: {self.hard_flag_counter}")
 
+            elif self.current_mode == "custom":
+                self.custom_flag_counter -= 1
+                self.custom_flag.config(text=f"🚩: {self.custom_flag_counter}")
+
         elif button_type[i][j]["text"] == "🚩" and not button_type[i][j]["state"] == "disabled":
             button_type[i][j].config(text="")
             if self.current_mode == "easy":
@@ -684,12 +691,20 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             elif self.current_mode == "hard":
                 self.hard_flag_counter += 1
                 self.hard_flag.config(text=f"🚩: {self.hard_flag_counter}")
+            
+            elif self.current_mode == "custom":
+                self.custom_flag_counter += 1
+                self.custom_flag.config(text=f"🚩: {self.custom_flag_counter}")
 
     def reset(self, rows, columns, button_type, bomb_type, flag_type, total_bomb):
         bomb_type.clear()
         self.easy_flag_counter = EASY_TOTAL_BOMBS
         self.medium_flag_counter = MEDIUM_TOTAL_BOMBS
         self.hard_flag_counter = HARD_TOTAL_BOMBS
+        try:
+            self.custom_flag_counter = self.custom_total_bombs
+        except AttributeError:
+            pass
         flag_type.config(text=f"🚩: {total_bomb}")
 
         for i in range(rows):
