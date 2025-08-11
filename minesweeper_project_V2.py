@@ -9,12 +9,14 @@ import random as r
 EASY_GRID = 9
 MEDIUM_GRID = 16
 HARD_GRID = 20
+FRUIT_GRID = 20
 EASY_TOTAL_TILES = 81
 MEDIUM_TOTAL_TILES = 256
 HARD_TOTAL_TILES = 400
 EASY_TOTAL_BOMBS = 10
 MEDIUM_TOTAL_BOMBS = 40
 HARD_TOTAL_BOMBS = 80
+FRUIT_TOTAL_BOMBS = 20
 
 class Minesweeper:
 
@@ -97,7 +99,6 @@ class Minesweeper:
 
         return frame
     
-    # WIP (Work In Progress)
     def create_tutorial_frame(self):
         self.tutorial_frame = tk.Frame(self.container)
         self.tutorial_frame.grid(row = 0, column = 0, sticky = "NSEW")
@@ -417,42 +418,101 @@ click on every tile that does not contain a bomb. (Click to continue)""")
 
         return self.custom_frame
     
-    def custom_clicks(self, i, j):
-        self.current_mode = "custom"
-        if self.custom_buttons[i][j]["text"] == "🚩":
-            return
-        if len(self.custom_bombs) == 0:
-            self.start_timer()
-            self.custom_tile_locations = [(i, j) for i  in range(self.custom_rows) for j in range(self.custom_columns)]
-            self.surrounding_tiles = (i, j), (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
-            custom_excluded_tiles = []
-            for x, y in self.surrounding_tiles:
-                if 0 <= x < self.custom_rows and 0 <= y < self.custom_columns:
-                    custom_excluded_tiles.append((x, y))
-            custom_safe_tiles = []
-            for tile in self.custom_tile_locations:
-                if tile not in custom_excluded_tiles:
-                    custom_safe_tiles.append(tile)
-            self.custom_bombs = r.sample(custom_safe_tiles, k=self.custom_total_bombs)
-
-        print(f"You clicked: ({i}, {j})") # For Debugging
-        if (i, j) in self.custom_bombs and not self.custom_buttons[i][j]["state"] == "disabled":
-            self.stop_timer(self.custom_timer_count)
-            print("Bomb")
-            for (i, j) in self.custom_bombs:
-                self.custom_buttons[i][j].config(text="💣")
-            for (i, j) in self.custom_tile_locations:
-                self.custom_buttons[i][j].config(bg="red", state="disabled")
-        else:
-            print("Safe")
-            self.reveal_tiles(i, j, self.custom_bombs, self.custom_buttons, self.custom_rows, self.custom_columns)
-
     # WIP
     def create_gamemodes_frame(self):
-        frame = tk.Frame(self.container)
-        frame.grid(row = 0, column = 0, sticky = "NSEW")
+        self.gamemodes_frame = tk.Frame(self.container)
+        self.gamemodes_frame.grid(row=0, column=0, sticky = "NSEW")
 
-        return frame
+        self.gamemode_one_frame = tk.Button(self.gamemodes_frame, text="Gamemode 1: Fruitsweeper", command = self.create_fruitsweeper_frame)
+        self.gamemode_one_frame.grid(row=0, column=0, sticky = "NSEW")
+
+        return self.gamemodes_frame
+
+    def create_fruitsweeper_frame(self):
+        self.fruit_sweeper_frame = tk.Frame(self.container)
+        self.fruit_sweeper_frame.grid(row = 0, column = 0, sticky = "NSEW")
+
+        self.header_frame = tk.Frame(self.fruit_sweeper_frame)
+        self.header_frame.grid(row=0, column=0, sticky = "EW", pady=5)
+
+        self.bomb_count = tk.Label(self.header_frame, text="Bombs: 20")
+        self.bomb_count.grid(row=0, column=3, padx=5)
+
+        self.fruit_reset_game = tk.Button(self.header_frame, text="Reset", command = self.create_fruitsweeper_frame)
+        self.fruit_reset_game.grid(row=0, column=2, padx=5)
+
+        self.points = tk.Label(self.header_frame, text="0")
+        self.points.grid(row=0, column=0, padx=5)
+
+        self.menu = tk.Button(self.header_frame, text="Menu", command = lambda: self.show_frame("MainFrame"))
+        self.menu.grid(row=0, column=5, padx=5)
+
+        self.header_frame.grid_columnconfigure(1, weight = 1)
+        self.header_frame.grid_columnconfigure(4, weight = 1)
+
+        self.grid_frame = tk.Frame(self.fruit_sweeper_frame)
+        self.grid_frame.grid(row=1, column=0, sticky = "NSEW")
+
+        self.fruit_buttons = []
+        self.fruit_bombs = 20
+
+        for i in range(FRUIT_GRID):
+            fruit_row = []
+            for j in range(FRUIT_GRID):
+                fruit_tile = tk.Button(self.grid_frame, borderwidth=1, width=2, height=1)
+                fruit_tile.grid(row = i, column = j, sticky = "NSEW")
+                fruit_tile.bind('<Button-1>', lambda event, x=i, y=j: self.fruit_clicks(x, y))
+                fruit_row.append(fruit_tile)
+            self.fruit_buttons.append(fruit_row)
+
+        self.fruits = [
+            {"name" : "🍎", "points" : 10},
+            {"name" : "🍌", "points" : 20},
+            {"name" : "🍇", "points" : 30}
+            ]
+            
+        self.fruitsweeper_tile_locations = [(i, j) for i  in range(FRUIT_GRID) for j in range(FRUIT_GRID)]
+        self.fruit_tile_locations = r.sample(self.fruitsweeper_tile_locations, k=120)
+
+        for (x, y) in self.fruitsweeper_tile_locations:
+            button = self.fruit_buttons[x][y]
+            if (x, y) in self.fruit_tile_locations:
+                fruit = r.choices(self.fruits, weights=(45, 35, 20), k=1)[0]
+                button.fruit = fruit
+            else:
+                button.fruit = None
+        
+        for i in range(FRUIT_GRID):
+            self.grid_frame.grid_rowconfigure(i, weight = 1)
+            self.grid_frame.grid_columnconfigure(i, weight = 1)
+
+        self.fruit_sweeper_frame.grid_rowconfigure(1, weight = 1)
+        self.fruit_sweeper_frame.grid_columnconfigure(0, weight = 1)
+
+        return self.fruit_sweeper_frame
+    
+    def fruit_clicks(self, i, j):
+        self.surrounding_tiles = (i, j), (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
+        self.fruit_bombs -= 1
+        self.bomb_count.config(text=f"Bombs: {self.fruit_bombs}")
+        if self.fruit_bombs == 0:
+            for i in range(FRUIT_GRID):
+                for j in range(FRUIT_GRID):
+                    self.fruit_buttons[i][j].config(state="disabled")
+
+        for (i, j) in self.surrounding_tiles:
+            button = self.fruit_buttons[i][j]
+            if i < 0 or i > (FRUIT_GRID-1) or j < 0 or j > (FRUIT_GRID-1):
+                continue
+            if button["state"] == "disabled":
+                continue
+            
+            if button.fruit is None:
+                button.config(text="", bg = "light grey", state="disabled")
+            else:
+                button.config(text=button.fruit["name"], bg = "light green", state="disabled")
+                current_points = int(self.points["text"])
+                self.points.config(text=(current_points + button.fruit["points"]))
 
     # WIP
     def create_leaderboard_frame(self):
@@ -610,6 +670,37 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
         else:
             print("Safe")
             self.reveal_tiles(i, j, self.hard_bombs, self.hard_buttons, HARD_GRID, HARD_GRID)
+
+    
+    def custom_clicks(self, i, j):
+        self.current_mode = "custom"
+        if self.custom_buttons[i][j]["text"] == "🚩":
+            return
+        if len(self.custom_bombs) == 0:
+            self.start_timer()
+            self.custom_tile_locations = [(i, j) for i  in range(self.custom_rows) for j in range(self.custom_columns)]
+            self.surrounding_tiles = (i, j), (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
+            custom_excluded_tiles = []
+            for x, y in self.surrounding_tiles:
+                if 0 <= x < self.custom_rows and 0 <= y < self.custom_columns:
+                    custom_excluded_tiles.append((x, y))
+            custom_safe_tiles = []
+            for tile in self.custom_tile_locations:
+                if tile not in custom_excluded_tiles:
+                    custom_safe_tiles.append(tile)
+            self.custom_bombs = r.sample(custom_safe_tiles, k=self.custom_total_bombs)
+
+        print(f"You clicked: ({i}, {j})") # For Debugging
+        if (i, j) in self.custom_bombs and not self.custom_buttons[i][j]["state"] == "disabled":
+            self.stop_timer(self.custom_timer_count)
+            print("Bomb")
+            for (i, j) in self.custom_bombs:
+                self.custom_buttons[i][j].config(text="💣")
+            for (i, j) in self.custom_tile_locations:
+                self.custom_buttons[i][j].config(bg="red", state="disabled")
+        else:
+            print("Safe")
+            self.reveal_tiles(i, j, self.custom_bombs, self.custom_buttons, self.custom_rows, self.custom_columns)
 
     # Function that calculates tile number counter and reveals valid tiles
     def reveal_tiles(self, i, j, bomb_type, button_type, rows, columns):
