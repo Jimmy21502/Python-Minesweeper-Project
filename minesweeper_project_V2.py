@@ -466,9 +466,17 @@ click on every tile that does not contain a bomb. (Click to continue)""")
             self.fruit_buttons.append(fruit_row)
 
         self.fruits = [
-            {"name" : "🍎", "points" : 10},
-            {"name" : "🍌", "points" : 20},
-            {"name" : "🍇", "points" : 30}
+            {"name" : "🍎", "value" : 10},
+            {"name" : "🍌", "value" : 25},
+            {"name" : "🍇", "value" : 35},
+            {"name" : "🍍", "value" : 50},
+            {"name" : "🍓", "value" : 100},
+            {"name" : "🫐", "value" : 110},
+            {"name" : "🍋", "value" : -50},
+            {"name" : "👑", "value" : 250},
+            {"name" : "💎", "value" : 500},
+            {"name" : "☣️", "value" : 0},
+            {"name" : "💣", "value" : 0}
             ]
             
         self.fruitsweeper_tile_locations = [(i, j) for i  in range(FRUIT_GRID) for j in range(FRUIT_GRID)]
@@ -477,7 +485,7 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         for (x, y) in self.fruitsweeper_tile_locations:
             button = self.fruit_buttons[x][y]
             if (x, y) in self.fruit_tile_locations:
-                fruit = r.choices(self.fruits, weights=(45, 35, 20), k=1)[0]
+                fruit = r.choices(self.fruits, weights=(16, 25, 20, 15, 4, 5, 5, 3, 2, 1, 4), k=1)[0]
                 button.fruit = fruit
             else:
                 button.fruit = None
@@ -493,17 +501,16 @@ click on every tile that does not contain a bomb. (Click to continue)""")
     
     def fruit_clicks(self, i, j):
         self.surrounding_tiles = (i, j), (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
-        self.fruit_bombs -= 1
-        self.bomb_count.config(text=f"Bombs: {self.fruit_bombs}")
-        if self.fruit_bombs == 0:
-            for i in range(FRUIT_GRID):
-                for j in range(FRUIT_GRID):
-                    self.fruit_buttons[i][j].config(state="disabled")
+
+        if self.fruit_buttons[i][j]["state"] == "disabled":
+            return
 
         for (i, j) in self.surrounding_tiles:
-            button = self.fruit_buttons[i][j]
             if i < 0 or i > (FRUIT_GRID-1) or j < 0 or j > (FRUIT_GRID-1):
                 continue
+
+            button = self.fruit_buttons[i][j]
+
             if button["state"] == "disabled":
                 continue
             
@@ -512,7 +519,21 @@ click on every tile that does not contain a bomb. (Click to continue)""")
             else:
                 button.config(text=button.fruit["name"], bg = "light green", state="disabled")
                 current_points = int(self.points["text"])
-                self.points.config(text=(current_points + button.fruit["points"]))
+                self.points.config(text=(current_points + button.fruit["value"]))
+                if button.fruit["name"] == "☣️":
+                    for i in range(FRUIT_GRID):
+                        for j in range(FRUIT_GRID):
+                            self.fruit_buttons[i][j].config(state="disabled", bg="light green")
+                if button.fruit["name"] == "💣":
+                    self.fruit_bombs += 1
+
+        self.fruit_bombs -= 1
+        self.bomb_count.config(text=f"Bombs: {self.fruit_bombs}")
+
+        if self.fruit_bombs == 0:
+            for i in range(FRUIT_GRID):
+                for j in range(FRUIT_GRID):
+                    self.fruit_buttons[i][j].config(state="disabled", bg="light green")
 
     # WIP
     def create_leaderboard_frame(self):
