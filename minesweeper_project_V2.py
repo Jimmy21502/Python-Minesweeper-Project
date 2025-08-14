@@ -48,7 +48,6 @@ class Minesweeper:
         self.frames["MediumFrame"] = self.create_medium_frame()
         self.frames["HardFrame"] = self.create_hard_frame()
         self.frames["CustomSettingFrame"] = self.create_custom_setting_frame()
-        self.frames["CustomFrame"] = self.create_custom_frame()
         self.frames["GamemodesFrame"] = self.create_gamemodes_frame()
         self.frames["LeaderboardFrame"] = self.create_leaderboard_frame()
 
@@ -353,6 +352,9 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         self.start_button = tk.Button(self.custom_setting_frame, text="Start Game", command = self.create_custom_frame)
         self.start_button.grid(row=3, column=0, columnspan=2)
 
+        self.return_button = tk.Button(self.custom_setting_frame, text="Return", command = lambda: self.show_frame("MainFrame"))
+        self.return_button.grid(row=4, column=0, columnspan=2)
+
         return self.custom_setting_frame
 
     def create_custom_frame(self):
@@ -426,6 +428,18 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         self.gamemode_one_frame = tk.Button(self.gamemodes_frame, text="Gamemode 1: Fruitsweeper", command = self.create_fruitsweeper_frame)
         self.gamemode_one_frame.grid(row=0, column=0, sticky = "NSEW")
 
+        self.gamemode_one_info_frame = tk.Button(self.gamemodes_frame, text="Info", command = self.create_fruitsweeper_info_frame)
+        self.gamemode_one_info_frame.grid(row=0, column=1, sticky = "NSEW")
+
+        self.gamemode_two_frame = tk.Button(self.gamemodes_frame, text="Placeholder")
+        self.gamemode_two_frame.grid(row=1, column=0, sticky = "NSEW")
+        
+        self.gamemode_two_frame = tk.Button(self.gamemodes_frame, text="Info")
+        self.gamemode_two_frame.grid(row=1, column=1, sticky = "NSEW")
+
+        self.menu_button = tk.Button(self.gamemodes_frame, text="Back to Menu", command = lambda: self.show_frame("MainFrame"))
+        self.menu_button.grid(row=2, column=0, sticky="SEW")
+
         return self.gamemodes_frame
 
     def create_fruitsweeper_frame(self):
@@ -475,7 +489,7 @@ click on every tile that does not contain a bomb. (Click to continue)""")
             {"name" : "🍋", "value" : -50},
             {"name" : "👑", "value" : 250},
             {"name" : "💎", "value" : 500},
-            {"name" : "☣️", "value" : 0},
+            {"name" : "⚠️", "value" : 0},
             {"name" : "💣", "value" : 0}
             ]
             
@@ -520,10 +534,10 @@ click on every tile that does not contain a bomb. (Click to continue)""")
                 button.config(text=button.fruit["name"], bg = "light green", state="disabled")
                 current_points = int(self.points["text"])
                 self.points.config(text=(current_points + button.fruit["value"]))
-                if button.fruit["name"] == "☣️":
+                if button.fruit["name"] == "⚠️" and not self.fruit_bombs == 0:
                     for i in range(FRUIT_GRID):
                         for j in range(FRUIT_GRID):
-                            self.fruit_buttons[i][j].config(state="disabled", bg="light green")
+                            self.fruit_buttons[i][j].config(state="disabled", bg="red")
                 if button.fruit["name"] == "💣":
                     self.fruit_bombs += 1
 
@@ -534,6 +548,42 @@ click on every tile that does not contain a bomb. (Click to continue)""")
             for i in range(FRUIT_GRID):
                 for j in range(FRUIT_GRID):
                     self.fruit_buttons[i][j].config(state="disabled", bg="light green")
+
+    def create_fruitsweeper_info_frame(self):
+        self.fruitsweeper_info_frame = tk.Frame(self.container)
+        self.fruitsweeper_info_frame.grid(row=0, column=0, sticky="NSEW")
+
+        self.title_label = tk.Label(self.fruitsweeper_info_frame, text="Fruitsweeper", font="Arial 20 bold")
+        self.title_label.grid(row=0, column=0, columnspan=2, sticky = "NEW", pady=15)
+
+        self.info_label = tk.Label(self.fruitsweeper_info_frame, text="""Welcome to Fruitsweeper. 
+The objective of this gamemode is to score the highest amount of points possible.
+In this gamemode, you use 20 bombs to reveal tiles in a 3x3 radius where clicked.
+Each tile revealed has a chance of being a fruit (or other items), granting points.
+The game ends when you use up all 20 bombs, so use them wisely!
+NOTE: This gamemode is completely luck based.
+
+For your reference:
+🍎: 10 Points
+🍌: 25 Points
+🍇: 35 Points
+🍍: 50 Points
+🍓: 100 Points
+🫐: 110 Points
+🍋: -50 Points
+👑: 250 Points
+💎: 500 Points
+⚠️: Ends the game immediately
+💣: Gives you one bomb""")
+        self.info_label.grid(row=1, column=0, sticky="NSEW", pady=30)
+
+        self.info_return_button = tk.Button(self.fruitsweeper_info_frame, text="Return", command= lambda: self.show_frame("GamemodesFrame"))
+        self.info_return_button.grid(row=2, column=0, sticky="SEW", pady=30)
+
+        self.fruitsweeper_info_frame.grid_rowconfigure(2, weight = 1)
+        self.fruitsweeper_info_frame.grid_columnconfigure(0, weight = 1)      
+
+        return self.fruitsweeper_info_frame
 
     # WIP
     def create_leaderboard_frame(self):
