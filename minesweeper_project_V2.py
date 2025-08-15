@@ -8,13 +8,16 @@ import random as r
 # Constants
 EASY_GRID = 9
 MEDIUM_GRID = 16
+GHOSTSWEEPER_GRID = 16
 HARD_GRID = 20
 FRUIT_GRID = 20
 EASY_TOTAL_TILES = 81
 MEDIUM_TOTAL_TILES = 256
+GHOSTSWEEPER_TOTAL_TILES = 256
 HARD_TOTAL_TILES = 400
 EASY_TOTAL_BOMBS = 10
 MEDIUM_TOTAL_BOMBS = 40
+GHOSTSWEEPER_TOTAL_BOMBS = 40
 HARD_TOTAL_BOMBS = 80
 FRUIT_TOTAL_BOMBS = 20
 
@@ -28,9 +31,11 @@ class Minesweeper:
         self.medium_timer_count = None
         self.hard_timer_count = None
         self.custom_timer_count = None
+        self.ghostsweeper_timer_count = None
         self.easy_flag_counter = EASY_TOTAL_BOMBS
         self.medium_flag_counter = MEDIUM_TOTAL_BOMBS
         self.hard_flag_counter = HARD_TOTAL_BOMBS
+        self.ghostsweeper_flag_counter = 10
         self.tutorial_counter = 0
 
         # Container that holds the frames together
@@ -371,6 +376,7 @@ click on every tile that does not contain a bomb. (Click to continue)""")
             return
         
         if self.custom_total_bombs > int((self.custom_rows*self.custom_columns)/(10/3)) or self.custom_total_bombs < 10:
+            self.bombs_label.config(text=f"Bombs: (10 min / {str((self.custom_rows*self.custom_columns)/(10/3))} max):")
             return
         
         self.custom_frame = tk.Frame(self.container)
@@ -431,10 +437,10 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         self.gamemode_one_info_frame = tk.Button(self.gamemodes_frame, text="Info", command = self.create_fruitsweeper_info_frame)
         self.gamemode_one_info_frame.grid(row=0, column=1, sticky = "NSEW")
 
-        self.gamemode_two_frame = tk.Button(self.gamemodes_frame, text="Placeholder")
+        self.gamemode_two_frame = tk.Button(self.gamemodes_frame, text="Gamemode 2: Ghostsweeper", command = self.create_ghostsweeper_frame)
         self.gamemode_two_frame.grid(row=1, column=0, sticky = "NSEW")
         
-        self.gamemode_two_frame = tk.Button(self.gamemodes_frame, text="Info")
+        self.gamemode_two_frame = tk.Button(self.gamemodes_frame, text="Info", command = self.create_ghostsweeper_info_frame)
         self.gamemode_two_frame.grid(row=1, column=1, sticky = "NSEW")
 
         self.menu_button = tk.Button(self.gamemodes_frame, text="Back to Menu", command = lambda: self.show_frame("MainFrame"))
@@ -556,7 +562,7 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         self.title_label = tk.Label(self.fruitsweeper_info_frame, text="Fruitsweeper", font="Arial 20 bold")
         self.title_label.grid(row=0, column=0, columnspan=2, sticky = "NEW", pady=15)
 
-        self.info_label = tk.Label(self.fruitsweeper_info_frame, text="""Welcome to Fruitsweeper. 
+        self.info_label = tk.Label(self.fruitsweeper_info_frame, text="""Welcome to Fruitsweeper!
 The objective of this gamemode is to score the highest amount of points possible.
 In this gamemode, you use 20 bombs to reveal tiles in a 3x3 radius where clicked.
 Each tile revealed has a chance of being a fruit (or other items), granting points.
@@ -578,12 +584,126 @@ For your reference:
         self.info_label.grid(row=1, column=0, sticky="NSEW", pady=30)
 
         self.info_return_button = tk.Button(self.fruitsweeper_info_frame, text="Return", command= lambda: self.show_frame("GamemodesFrame"))
-        self.info_return_button.grid(row=2, column=0, sticky="SEW", pady=30)
+        self.info_return_button.grid(row=2, column=0, sticky="SEW")
 
         self.fruitsweeper_info_frame.grid_rowconfigure(2, weight = 1)
         self.fruitsweeper_info_frame.grid_columnconfigure(0, weight = 1)      
 
         return self.fruitsweeper_info_frame
+
+    def create_ghostsweeper_frame(self):
+        self.ghostsweeper_frame = tk.Frame(self.container)
+        self.ghostsweeper_frame.grid(row=0, column=0, sticky = "NSEW")
+
+        self.header_frame = tk.Frame(self.ghostsweeper_frame)
+        self.header_frame.grid(row=0, column=0, sticky = "EW", pady=5)
+
+        self.ghostsweeper_timer = tk.Label(self.header_frame, text="Timer: 300")
+        self.ghostsweeper_timer.grid(row=0, column=3, padx=5)
+
+        self.ghostsweeper_reset_game = tk.Button(self.header_frame, text="Reset", command = lambda: [self.reset(GHOSTSWEEPER_GRID, GHOSTSWEEPER_GRID, self.ghostsweeper_buttons, self.ghostsweeper_bombs, self.ghostsweeper_flag, GHOSTSWEEPER_TOTAL_BOMBS), self.stop_timer(self.ghostsweeper_timer_count)])
+        self.ghostsweeper_reset_game.grid(row=0, column=2, padx=5)
+
+        self.ghostsweeper_flag = tk.Label(self.header_frame, text="💡: 10")
+        self.ghostsweeper_flag.grid(row=0, column=0, padx=5)
+
+        self.menu = tk.Button(self.header_frame, text="Menu", command = lambda: [self.show_frame("MainFrame"), self.reset(GHOSTSWEEPER_GRID, GHOSTSWEEPER_GRID, self.ghostsweeper_buttons, self.ghostsweeper_bombs, self.ghostsweeper_flag, GHOSTSWEEPER_TOTAL_BOMBS), self.stop_timer(self.ghostsweeper_timer_count)])
+        self.menu.grid(row=0, column=5, padx=5)
+        
+        self.header_frame.grid_columnconfigure(1, weight = 1)
+        self.header_frame.grid_columnconfigure(4, weight = 1)
+
+        self.grid_frame = tk.Frame(self.ghostsweeper_frame)
+        self.grid_frame.grid(row=1, column=0, sticky = "NSEW")
+
+        self.ghostsweeper_buttons = []
+        self.ghostsweeper_bombs = []
+
+        for i in range(GHOSTSWEEPER_GRID):
+            ghostsweeper_row = []
+            for j in range(GHOSTSWEEPER_GRID):
+                ghostsweeper_tile = tk.Button(self.grid_frame, borderwidth=1, width=2, height=1)
+                ghostsweeper_tile.grid(row = i, column = j, sticky = "NSEW")
+                ghostsweeper_tile.bind('<Button-1>', lambda event, x=i, y=j: self.left_click(self.ghostsweeper_clicks, x, y, GHOSTSWEEPER_GRID, GHOSTSWEEPER_GRID, self.ghostsweeper_buttons, GHOSTSWEEPER_TOTAL_TILES, GHOSTSWEEPER_TOTAL_BOMBS, self.ghostsweeper_timer_count))
+                ghostsweeper_tile.bind('<Button-3>', lambda event, x=i, y=j: self.right_click(x, y, self.ghostsweeper_buttons))
+                ghostsweeper_row.append(ghostsweeper_tile)
+            self.ghostsweeper_buttons.append(ghostsweeper_row)
+
+        for i in range(GHOSTSWEEPER_GRID):
+            self.grid_frame.grid_rowconfigure(i, weight = 1)
+            self.grid_frame.grid_columnconfigure(i, weight = 1)
+    
+        self.ghostsweeper_frame.grid_rowconfigure(1, weight = 1)
+        self.ghostsweeper_frame.grid_columnconfigure(0, weight = 1)
+
+        return self.ghostsweeper_frame
+    
+    def ghostsweeper_clicks(self, i, j):
+        self.current_mode = "ghostsweeper"
+        if self.ghostsweeper_buttons[i][j]["text"] == "💡":
+            return
+        if len(self.ghostsweeper_bombs) == 0:
+            self.start_timer()
+            self.ghostsweeper_tile_locations = [(i, j) for i  in range(GHOSTSWEEPER_GRID) for j in range(GHOSTSWEEPER_GRID)]
+            self.surrounding_tiles = (i, j), (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
+            ghostsweeper_excluded_tiles = []
+            for x, y in self.surrounding_tiles:
+                if 0 <= x < GHOSTSWEEPER_GRID and 0 <= y < GHOSTSWEEPER_GRID:
+                    ghostsweeper_excluded_tiles.append((x, y))
+            ghostsweeper_safe_tiles = []
+            for tile in self.ghostsweeper_tile_locations:
+                if tile not in ghostsweeper_excluded_tiles:
+                    ghostsweeper_safe_tiles.append(tile)
+            self.ghostsweeper_bombs = r.sample(ghostsweeper_safe_tiles, k=GHOSTSWEEPER_TOTAL_BOMBS)
+
+        lit_tiles = []
+
+        print(f"You clicked: ({i}, {j})") # For Debugging
+        if (i, j) in self.ghostsweeper_bombs and not self.ghostsweeper_buttons[i][j]["state"] == "disabled":
+            self.stop_timer(self.ghostsweeper_timer_count)
+            print("Bomb")
+            for (i, j) in self.ghostsweeper_bombs:
+                self.ghostsweeper_buttons[i][j].config(text="👻")
+            for (i, j) in self.ghostsweeper_tile_locations:
+                self.ghostsweeper_buttons[i][j].config(bg="red", state="disabled")
+        else:
+            print("Safe")
+            self.reveal_tiles(i, j, self.ghostsweeper_bombs, self.ghostsweeper_buttons, GHOSTSWEEPER_GRID, GHOSTSWEEPER_GRID)
+
+            for i in range(GHOSTSWEEPER_GRID):
+                for j in range(GHOSTSWEEPER_GRID):
+                    if self.ghostsweeper_buttons[i][j]["bg"] == "light grey":
+                        lit_tiles.append((i, j))
+
+            for i in range(GHOSTSWEEPER_GRID):
+                for j in range(GHOSTSWEEPER_GRID):
+                    if (i, j) not in lit_tiles:
+                        self.ghostsweeper_buttons[i][j].config(bg="black", state="disabled")
+
+    def create_ghostsweeper_info_frame(self):
+        self.ghostsweeper_info_frame = tk.Frame(self.container)
+        self.ghostsweeper_info_frame.grid(row=0, column=0, sticky="NSEW")
+
+        self.title_label = tk.Label(self.ghostsweeper_info_frame, text="Ghostsweeper", font="Arial 20 bold")
+        self.title_label.grid(row=0, column=0, columnspan=2, sticky = "NEW", pady=15)
+
+        self.info_label = tk.Label(self.ghostsweeper_info_frame, text="""Welcome to Ghostsweeper!
+The objective of this gamemode is to reveal the entire haunted grid 
+before the time runs out. Using limited lights to illuminate tiles, 
+you must avoid hidden ghosts, as clicking a ghost ends the game immediately.
+Lit tiles reveal further than regular tiles, but ghosts may appear on them.
+Failing to react to a ghost in time leads to that light being permanently lost,
+leaving you with fewer lights to navigate the haunted grid. 
+Use your lights sparingly and protect them, and light up every tile to win!""")
+        self.info_label.grid(row=1, column=0, sticky="NSEW", pady=30)
+
+        self.info_return_button = tk.Button(self.ghostsweeper_info_frame, text="Return", command= lambda: self.show_frame("GamemodesFrame"))
+        self.info_return_button.grid(row=2, column=0, sticky="SEW")
+
+        self.ghostsweeper_info_frame.grid_rowconfigure(2, weight = 1)
+        self.ghostsweeper_info_frame.grid_columnconfigure(0, weight = 1)      
+
+        return self.ghostsweeper_info_frame
 
     # WIP
     def create_leaderboard_frame(self):
@@ -823,24 +943,35 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
     # Places flag if the tile text is empty and not disabed, and removing flags if the tile text is a flag and the tile is not disabled
     def right_click(self, i, j, button_type):
         if button_type[i][j]["text"] == "" and not button_type[i][j]["state"] == "disabled":
-            button_type[i][j].config(text="🚩")
             if self.current_mode == "easy":
                 self.easy_flag_counter -= 1
                 self.easy_flag.config(text=f"🚩: {self.easy_flag_counter}")
+                button_type[i][j].config(text="🚩")
 
             elif self.current_mode == "medium":
                 self.medium_flag_counter -= 1
                 self.medium_flag.config(text=f"🚩: {self.medium_flag_counter}")
+                button_type[i][j].config(text="🚩")
 
             elif self.current_mode == "hard":
                 self.hard_flag_counter -= 1
                 self.hard_flag.config(text=f"🚩: {self.hard_flag_counter}")
+                button_type[i][j].config(text="🚩")
 
             elif self.current_mode == "custom":
                 self.custom_flag_counter -= 1
                 self.custom_flag.config(text=f"🚩: {self.custom_flag_counter}")
+                button_type[i][j].config(text="🚩")
 
-        elif button_type[i][j]["text"] == "🚩" and not button_type[i][j]["state"] == "disabled":
+            elif self.current_mode == "ghostsweeper":
+                if self.ghostsweeper_flag_counter == 0:
+                    return
+                else:
+                    self.ghostsweeper_flag_counter -= 1
+                    self.ghostsweeper_flag.config(text=f"💡: {self.ghostsweeper_flag_counter}")
+                    button_type[i][j].config(text="💡")
+
+        elif button_type[i][j]["text"] == "🚩" or button_type[i][j]["text"] == "💡" and not button_type[i][j]["state"] == "disabled":
             button_type[i][j].config(text="")
             if self.current_mode == "easy":
                 self.easy_flag_counter += 1
@@ -858,16 +989,26 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
                 self.custom_flag_counter += 1
                 self.custom_flag.config(text=f"🚩: {self.custom_flag_counter}")
 
+            elif self.current_mode == "ghostsweeper":
+                self.ghostsweeper_flag_counter += 1
+                self.ghostsweeper_flag.config(text=f"💡: {self.ghostsweeper_flag_counter}")
+
     def reset(self, rows, columns, button_type, bomb_type, flag_type, total_bomb):
         bomb_type.clear()
         self.easy_flag_counter = EASY_TOTAL_BOMBS
         self.medium_flag_counter = MEDIUM_TOTAL_BOMBS
         self.hard_flag_counter = HARD_TOTAL_BOMBS
+        self.ghostsweeper_flag_counter = 10
+
         try:
             self.custom_flag_counter = self.custom_total_bombs
         except AttributeError:
             pass
-        flag_type.config(text=f"🚩: {total_bomb}")
+
+        if self.current_mode == "ghostsweeper":
+            flag_type.config(text=f"💡: {self.ghostsweeper_flag_counter}")
+        else:
+            flag_type.config(text=f"🚩: {total_bomb}")
 
         for i in range(rows):
             for j in range(columns):
@@ -878,6 +1019,7 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
         self.medium_seconds_passed = 0
         self.hard_seconds_passed = 0
         self.custom_seconds_passed = 0
+        self.ghostsweeper_seconds_left = 300
         self.update_timer()
 
     def update_timer(self):
@@ -900,6 +1042,12 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             self.custom_timer.config(text=f"Timer: {self.custom_seconds_passed}")
             self.custom_seconds_passed += 1
             self.custom_timer_count = self.root.after(1000, self.update_timer)
+
+        elif self.current_mode == "ghostsweeper":
+            self.ghostsweeper_timer.config(text=f"Timer: {self.ghostsweeper_seconds_left}")
+            self.ghostsweeper_seconds_left -= 1
+            self.ghostsweeper_timer_count = self.root.after(1000, self.update_timer)
+
 
     def stop_timer(self, timer_type):
         if timer_type:
