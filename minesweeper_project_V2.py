@@ -642,6 +642,11 @@ For your reference:
         self.current_mode = "ghostsweeper"
         if self.ghostsweeper_buttons[i][j]["text"] == "💡":
             return
+        if self.ghostsweeper_buttons[i][j]["bg"] == "red":
+            return
+        if self.ghostsweeper_buttons[i][j]["bg"] == "black":
+            return
+
         if len(self.ghostsweeper_bombs) == 0:
             self.start_timer()
             self.ghostsweeper_tile_locations = [(i, j) for i  in range(GHOSTSWEEPER_GRID) for j in range(GHOSTSWEEPER_GRID)]
@@ -672,13 +677,25 @@ For your reference:
 
             for i in range(GHOSTSWEEPER_GRID):
                 for j in range(GHOSTSWEEPER_GRID):
-                    if self.ghostsweeper_buttons[i][j]["bg"] == "light grey":
+                    if self.ghostsweeper_buttons[i][j]["bg"] == "light grey" or self.ghostsweeper_buttons[i][j]["text"] == "💡":
                         lit_tiles.append((i, j))
+
+            extra_tiles = []
+            for x, y in lit_tiles:
+                surrounding = [(x+1, y), (x-1, y), (x, y+1), (x, y-1), (x+1, y+1), (x-1, y-1), (x+1, y-1), (x-1, y+1)]
+                for nx, ny in surrounding:
+                    if 0 <= nx < GHOSTSWEEPER_GRID and 0 <= ny < GHOSTSWEEPER_GRID:
+                        if (nx, ny) not in extra_tiles:
+                            extra_tiles.append((nx, ny))
+            lit_tiles.extend(extra_tiles)
 
             for i in range(GHOSTSWEEPER_GRID):
                 for j in range(GHOSTSWEEPER_GRID):
                     if (i, j) not in lit_tiles:
                         self.ghostsweeper_buttons[i][j].config(bg="black", state="disabled")
+                    else:
+                        if self.ghostsweeper_buttons[i][j]["bg"] != "light grey":
+                            self.ghostsweeper_buttons[i][j].config(bg="SystemButtonFace", state="normal")
 
     def create_ghostsweeper_info_frame(self):
         self.ghostsweeper_info_frame = tk.Frame(self.container)
@@ -691,10 +708,9 @@ For your reference:
 The objective of this gamemode is to reveal the entire haunted grid 
 before the time runs out. Using limited lights to illuminate tiles, 
 you must avoid hidden ghosts, as clicking a ghost ends the game immediately.
-Lit tiles reveal further than regular tiles, but ghosts may appear on them.
-Failing to react to a ghost in time leads to that light being permanently lost,
-leaving you with fewer lights to navigate the haunted grid. 
-Use your lights sparingly and protect them, and light up every tile to win!""")
+Lit tiles reveal tiles the same as regular tiles, but you cannot remove lights.
+This leaves you with fewer lights to navigate the haunted grid. 
+Use your lights sparingly, and reveal every tile to win!""")
         self.info_label.grid(row=1, column=0, sticky="NSEW", pady=30)
 
         self.info_return_button = tk.Button(self.ghostsweeper_info_frame, text="Return", command= lambda: self.show_frame("GamemodesFrame"))
@@ -900,7 +916,7 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             return
         if (i, j) in bomb_type:
             return
-        if button_type[i][j]["state"] == "disabled":
+        if button_type[i][j]["state"] == "disabled" and button_type[i][j]["bg"] in ("light grey", "red"):
             return
         if button_type[i][j]["text"] == "🚩":
             return
@@ -966,12 +982,43 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             elif self.current_mode == "ghostsweeper":
                 if self.ghostsweeper_flag_counter == 0:
                     return
+                if len(self.ghostsweeper_bombs) == 0:
+                    return
                 else:
-                    self.ghostsweeper_flag_counter -= 1
-                    self.ghostsweeper_flag.config(text=f"💡: {self.ghostsweeper_flag_counter}")
-                    button_type[i][j].config(text="💡")
+                    if button_type[i][j]["text"] == "💡":
+                        self.ghostsweeper_flag_counter += 1
+                        self.ghostsweeper_flag.config(text=f"💡: {self.ghostsweeper_flag_counter}")
+                        button_type[i][j].config(text="")
 
-        elif button_type[i][j]["text"] == "🚩" or button_type[i][j]["text"] == "💡" and not button_type[i][j]["state"] == "disabled":
+                    if button_type[i][j]["text"] == "":
+                        self.ghostsweeper_flag_counter -= 1
+                        self.ghostsweeper_flag.config(text=f"💡: {self.ghostsweeper_flag_counter}")
+                        button_type[i][j].config(text="💡")
+                    
+                    lit_tiles = []
+                    for i in range(GHOSTSWEEPER_GRID):
+                        for j in range(GHOSTSWEEPER_GRID):
+                            if self.ghostsweeper_buttons[i][j]["bg"] == "light grey" or self.ghostsweeper_buttons[i][j]["text"] == "💡":
+                                lit_tiles.append((i, j))
+
+                    extra_tiles = []
+                    for x, y in lit_tiles:
+                        surrounding = [(x+1, y), (x-1, y), (x, y+1), (x, y-1), (x+1, y+1), (x-1, y-1), (x+1, y-1), (x-1, y+1)]
+                        for nx, ny in surrounding:
+                            if 0 <= nx < GHOSTSWEEPER_GRID and 0 <= ny < GHOSTSWEEPER_GRID:
+                                if (nx, ny) not in extra_tiles:
+                                    extra_tiles.append((nx, ny))
+                    lit_tiles.extend(extra_tiles)
+
+                    for i in range(GHOSTSWEEPER_GRID):
+                        for j in range(GHOSTSWEEPER_GRID):
+                            if (i, j) not in lit_tiles:
+                                self.ghostsweeper_buttons[i][j].config(bg="black", state="disabled")
+                            else:
+                                if self.ghostsweeper_buttons[i][j]["bg"] != "light grey":
+                                    self.ghostsweeper_buttons[i][j].config(bg="SystemButtonFace", state="normal")
+
+        elif button_type[i][j]["text"] == "🚩" and not button_type[i][j]["state"] == "disabled":
             button_type[i][j].config(text="")
             if self.current_mode == "easy":
                 self.easy_flag_counter += 1
@@ -988,10 +1035,6 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             elif self.current_mode == "custom":
                 self.custom_flag_counter += 1
                 self.custom_flag.config(text=f"🚩: {self.custom_flag_counter}")
-
-            elif self.current_mode == "ghostsweeper":
-                self.ghostsweeper_flag_counter += 1
-                self.ghostsweeper_flag.config(text=f"💡: {self.ghostsweeper_flag_counter}")
 
     def reset(self, rows, columns, button_type, bomb_type, flag_type, total_bomb):
         bomb_type.clear()
@@ -1047,6 +1090,12 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             self.ghostsweeper_timer.config(text=f"Timer: {self.ghostsweeper_seconds_left}")
             self.ghostsweeper_seconds_left -= 1
             self.ghostsweeper_timer_count = self.root.after(1000, self.update_timer)
+            if self.ghostsweeper_seconds_left == -1:
+                self.stop_timer(self.ghostsweeper_timer_count)
+                for (i, j) in self.ghostsweeper_bombs:
+                    self.ghostsweeper_buttons[i][j].config(text="👻")
+                for (i, j) in self.ghostsweeper_tile_locations:
+                    self.ghostsweeper_buttons[i][j].config(bg="red", state="disabled")
 
 
     def stop_timer(self, timer_type):
