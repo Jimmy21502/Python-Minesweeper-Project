@@ -708,8 +708,8 @@ For your reference:
 The objective of this gamemode is to reveal the entire haunted grid 
 before the time runs out. Using limited lights to illuminate tiles, 
 you must avoid hidden ghosts, as clicking a ghost ends the game immediately.
-Lit tiles reveal tiles the same as regular tiles, but you cannot remove lights.
-This leaves you with fewer lights to navigate the haunted grid. 
+Lit tiles reveal tiles the same as regular tiles, but you only have 10.
+This leaves you with fewer lights to navigate the haunted grid.
 Use your lights sparingly, and reveal every tile to win!""")
         self.info_label.grid(row=1, column=0, sticky="NSEW", pady=30)
 
@@ -920,6 +920,8 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             return
         if button_type[i][j]["text"] == "🚩":
             return
+        if button_type[i][j]["text"] == "💡":
+            return
         
         # Reveals the tile
         button_type[i][j].config(bg="light grey", state="disabled")
@@ -958,6 +960,45 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
 
     # Places flag if the tile text is empty and not disabed, and removing flags if the tile text is a flag and the tile is not disabled
     def right_click(self, i, j, button_type):
+        if self.current_mode == "ghostsweeper":
+            if button_type[i][j]["text"] == "" and not button_type[i][j]["state"] == "disabled":
+                if len(self.ghostsweeper_bombs) == 0:
+                    return
+                if self.ghostsweeper_flag_counter == 0:
+                    return
+                else:
+                    self.ghostsweeper_flag_counter -= 1
+                    self.ghostsweeper_flag.config(text=f"💡: {self.ghostsweeper_flag_counter}")
+                    button_type[i][j].config(text="💡")
+            
+            elif button_type[i][j]["text"] == "💡":
+                self.ghostsweeper_flag_counter += 1
+                self.ghostsweeper_flag.config(text=f"💡: {self.ghostsweeper_flag_counter}")
+                button_type[i][j].config(text="")
+
+            lit_tiles = []
+            for i in range(GHOSTSWEEPER_GRID):
+                for j in range(GHOSTSWEEPER_GRID):
+                    if self.ghostsweeper_buttons[i][j]["bg"] == "light grey" or self.ghostsweeper_buttons[i][j]["text"] == "💡":
+                        lit_tiles.append((i, j))
+
+            extra_tiles = []
+            for x, y in lit_tiles:
+                surrounding = [(x+1, y), (x-1, y), (x, y+1), (x, y-1), (x+1, y+1), (x-1, y-1), (x+1, y-1), (x-1, y+1)]
+                for nx, ny in surrounding:
+                    if 0 <= nx < GHOSTSWEEPER_GRID and 0 <= ny < GHOSTSWEEPER_GRID:
+                        if (nx, ny) not in extra_tiles:
+                            extra_tiles.append((nx, ny))
+            lit_tiles.extend(extra_tiles)
+
+            for i in range(GHOSTSWEEPER_GRID):
+                for j in range(GHOSTSWEEPER_GRID):
+                    if (i, j) not in lit_tiles:
+                        self.ghostsweeper_buttons[i][j].config(bg="black", state="disabled")
+                    else:
+                        if self.ghostsweeper_buttons[i][j]["bg"] != "light grey":
+                            self.ghostsweeper_buttons[i][j].config(bg="SystemButtonFace", state="normal")
+                            
         if button_type[i][j]["text"] == "" and not button_type[i][j]["state"] == "disabled":
             if self.current_mode == "easy":
                 self.easy_flag_counter -= 1
@@ -978,45 +1019,6 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
                 self.custom_flag_counter -= 1
                 self.custom_flag.config(text=f"🚩: {self.custom_flag_counter}")
                 button_type[i][j].config(text="🚩")
-
-            elif self.current_mode == "ghostsweeper":
-                if self.ghostsweeper_flag_counter == 0:
-                    return
-                if len(self.ghostsweeper_bombs) == 0:
-                    return
-                else:
-                    if button_type[i][j]["text"] == "💡":
-                        self.ghostsweeper_flag_counter += 1
-                        self.ghostsweeper_flag.config(text=f"💡: {self.ghostsweeper_flag_counter}")
-                        button_type[i][j].config(text="")
-
-                    if button_type[i][j]["text"] == "":
-                        self.ghostsweeper_flag_counter -= 1
-                        self.ghostsweeper_flag.config(text=f"💡: {self.ghostsweeper_flag_counter}")
-                        button_type[i][j].config(text="💡")
-                    
-                    lit_tiles = []
-                    for i in range(GHOSTSWEEPER_GRID):
-                        for j in range(GHOSTSWEEPER_GRID):
-                            if self.ghostsweeper_buttons[i][j]["bg"] == "light grey" or self.ghostsweeper_buttons[i][j]["text"] == "💡":
-                                lit_tiles.append((i, j))
-
-                    extra_tiles = []
-                    for x, y in lit_tiles:
-                        surrounding = [(x+1, y), (x-1, y), (x, y+1), (x, y-1), (x+1, y+1), (x-1, y-1), (x+1, y-1), (x-1, y+1)]
-                        for nx, ny in surrounding:
-                            if 0 <= nx < GHOSTSWEEPER_GRID and 0 <= ny < GHOSTSWEEPER_GRID:
-                                if (nx, ny) not in extra_tiles:
-                                    extra_tiles.append((nx, ny))
-                    lit_tiles.extend(extra_tiles)
-
-                    for i in range(GHOSTSWEEPER_GRID):
-                        for j in range(GHOSTSWEEPER_GRID):
-                            if (i, j) not in lit_tiles:
-                                self.ghostsweeper_buttons[i][j].config(bg="black", state="disabled")
-                            else:
-                                if self.ghostsweeper_buttons[i][j]["bg"] != "light grey":
-                                    self.ghostsweeper_buttons[i][j].config(bg="SystemButtonFace", state="normal")
 
         elif button_type[i][j]["text"] == "🚩" and not button_type[i][j]["state"] == "disabled":
             button_type[i][j].config(text="")
