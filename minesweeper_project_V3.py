@@ -1154,7 +1154,10 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
         except FileNotFoundError:
             return []
         
-        scores.sort(key=lambda x: x[1])
+        if mode == "fruitsweeper":
+            scores.sort(key=lambda x: x[1], reverse=True)
+        else:
+            scores.sort(key=lambda x: x[1])
         return scores[:10]
     
     def show_leaderboard(self, mode):
