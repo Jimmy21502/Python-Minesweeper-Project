@@ -1,6 +1,6 @@
 # Started on 16/07/25
 # Version 3
-# The goal for Version 3 is to add a leaderboard for Easy, Mediun, Hard, and the Fruitsweeper gamemodes.
+# The goal for Version 3 is to add a leaderboard for Easy, Mediun, Hard, and the Fruitsweeper gamemode.
 
 import tkinter as tk
 import random as r
@@ -727,7 +727,6 @@ Use your lights sparingly, and reveal every tile to win!""")
 
         return self.ghostsweeper_info_frame
 
-    # WIP
     def create_leaderboard_frame(self):
         self.leaderboard_frame = tk.Frame(self.container)
         self.leaderboard_frame.grid(row = 0, column = 0, sticky = "NSEW")
@@ -816,6 +815,7 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
 (Click on the tile highlighted green to continue)""")
             self.tutorial_counter = 1
 
+    # This function handles clicks for the easy difficulty
     def easy_clicks(self, i, j):
         # If the tile if flagged, user cannot reveal it until it is unflagged
         if self.easy_buttons[i][j]["text"] == "🚩":
@@ -839,6 +839,8 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             self.easy_bombs = r.sample(easy_safe_tiles, k=EASY_TOTAL_BOMBS)
 
         print(f"You clicked: ({i}, {j})") # For Debugging
+        # If the position clicked is a bomb position, it stops the timer and ends the game
+        # Otherwise, the position clicked is a safe position and it calls the function to reveal tiles.
         if (i, j) in self.easy_bombs and not self.easy_buttons[i][j]["state"] == "disabled":
             self.stop_timer(self.easy_timer_count)
             print("Bomb")
@@ -850,6 +852,7 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             print("Safe")
             self.reveal_tiles(i, j, self.easy_bombs, self.easy_buttons, EASY_GRID, EASY_GRID)
 
+    # This function handles clicks for the medium difficulty, following the same code concept as easy difficulty.
     def medium_clicks(self, i, j):
         if self.medium_buttons[i][j]["text"] == "🚩":
             return
@@ -879,6 +882,7 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             print("Safe")
             self.reveal_tiles(i, j, self.medium_bombs, self.medium_buttons, MEDIUM_GRID, MEDIUM_GRID)
 
+    # This function handles clicks for the hard difficulty, following the same code concept as easy difficulty.
     def hard_clicks(self, i, j):
         if self.hard_buttons[i][j]["text"] == "🚩":
             return
@@ -908,7 +912,7 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             print("Safe")
             self.reveal_tiles(i, j, self.hard_bombs, self.hard_buttons, HARD_GRID, HARD_GRID)
 
-    
+    # This function handles clicks for the custom grid gamemode, following the same code concept as easy difficulty.
     def custom_clicks(self, i, j):
         self.current_mode = "custom"
         if self.custom_buttons[i][j]["text"] == "🚩":
@@ -954,6 +958,7 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             return
         
         # Reveals the tile
+        # For each bomb found in the neighboring tiles, the counter will increase by one and this number is displayed on clicked tiles
         button_type[i][j].config(bg="light grey", state="disabled")
         counter = 0
         neighboring_tiles = (i+1, j), (i-1, j), (i, j+1), (i, j-1), (i+1, j+1), (i-1, j-1), (i+1, j-1), (i-1, j+1)
@@ -967,14 +972,16 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
                 # This is known as recursion, calling a function on itself and it repeats until one of the boundaries are triggered
                 self.reveal_tiles(x, y, bomb_type, button_type, rows, columns)
 
-    # Counts the number of revealed tiles, if it is equal to the total tiles minus the total bombs, the tile backgrounds turn green
+    # Counts the number of revealed tiles, if it is equal to the total tiles minus the total bombs, the tile backgrounds turn green indicating a win.
     def win_condition(self, rows, columns, button_type, total_tile, total_bomb, timer_type, time):
         tile_counter = 0
+        # Checks every tile and increases the tile counter if the tile is revealed
         for i in range(rows):
             for j in range(columns):
-                if button_type[i][j]["state"] == "disabled":
+                if button_type[i][j]["state"] == "disabled" and button_type[i][j]["bg"] == "light grey":
                     tile_counter += 1
-        print(tile_counter)
+        print(tile_counter) # For debugging
+        # Stops timer and turns every tile green when the tile counter is equal to the total tles minus total number of bombs
         if tile_counter == total_tile - total_bomb:
             self.stop_timer(timer_type)
             for i in range(rows):
@@ -982,17 +989,18 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
                     button_type[i][j].config(bg="light green", state="disabled")
                     if button_type[i][j]["text"] == "🚩":
                         button_type[i][j].config(state="disabled")
+            # Asks the player for their name for leaderboard, unless gamemode is custom or ghostsweeper
             if self.current_mode in ("custom", "ghostsweeper"):
                 return
             else:
                 self.ask_player_name(self.current_mode, time)
 
-    # Running functions relevant to left-clicks
+    # Running functions relevant to left-clicks, checking win condition after every click.
     def left_click(self, method, i ,j, rows, columns, button_type, total_tile, total_bomb, timer_type, time):
         method(i, j)
         self.win_condition(rows, columns, button_type, total_tile, total_bomb, timer_type, time)
 
-    # Places flag if the tile text is empty and not disabed, and removing flags if the tile text is a flag and the tile is not disabled
+    # Places flag if the tile text is empty and not disabed, and removing flags if the tile text is a flag and the tile is not disabled.
     def right_click(self, i, j, button_type):
         if self.current_mode == "ghostsweeper":
             if button_type[i][j]["text"] == "" and not button_type[i][j]["state"] == "disabled":
@@ -1072,27 +1080,34 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
                 self.custom_flag_counter += 1
                 self.custom_flag.config(text=f"🚩: {self.custom_flag_counter}")
 
+    # This function resets the grid of the current gamemode the user is playing.
     def reset(self, rows, columns, button_type, bomb_type, flag_type, total_bomb):
+        # Every bomb is cleared since first click is determined by length of bombs list, which is empty until the first click
         bomb_type.clear()
+        # Resets flag counter to its original
         self.easy_flag_counter = EASY_TOTAL_BOMBS
         self.medium_flag_counter = MEDIUM_TOTAL_BOMBS
         self.hard_flag_counter = HARD_TOTAL_BOMBS
         self.ghostsweeper_flag_counter = 10
 
+        # Tries to reset custom flag counter
         try:
             self.custom_flag_counter = self.custom_total_bombs
         except AttributeError:
             pass
-
+        
+        # Flag icon is a light bulb for ghostsweeper gamemode, but is a normal flag for every other mode
         if self.current_mode == "ghostsweeper":
             flag_type.config(text=f"💡: {self.ghostsweeper_flag_counter}")
         else:
             flag_type.config(text=f"🚩: {total_bomb}")
 
+        # Resets each tile to its original colour and state
         for i in range(rows):
             for j in range(columns):
                 button_type[i][j].config(bg="SystemButtonFace", state="normal", text="")
 
+    # This function starts the timer.
     def start_timer(self):
         self.easy_seconds_passed = 0
         self.medium_seconds_passed = 0
@@ -1101,6 +1116,7 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
         self.ghostsweeper_seconds_left = 300
         self.update_timer()
 
+    # This function checks the current mode and updates its timer every second.
     def update_timer(self):
         if self.current_mode == "easy":
             self.easy_timer.config(text=f"Timer: {self.easy_seconds_passed}")
@@ -1122,6 +1138,7 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
             self.custom_seconds_passed += 1
             self.custom_timer_count = self.root.after(1000, self.update_timer)
 
+        # If the timer runs out, the user loses in this gamemode and the timer stops
         elif self.current_mode == "ghostsweeper":
             self.ghostsweeper_timer.config(text=f"Timer: {self.ghostsweeper_seconds_left}")
             self.ghostsweeper_seconds_left -= 1
@@ -1133,19 +1150,23 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
                 for (i, j) in self.ghostsweeper_tile_locations:
                     self.ghostsweeper_buttons[i][j].config(bg="red", state="disabled")
 
+    # Stops the timer
     def stop_timer(self, timer_type):
         if timer_type:
             self.root.after_cancel(timer_type)
 
+    # Saves score by writing to a file with the gamemode as its name.
     def save_score(self, mode, name, time):
         filename = f"{mode}.txt"
         with open(filename, "a") as f:
             f.write(f"{name},{time}\n")
 
+    # Loads the score of selected mode for whichever leaderboard the user selects.
     def load_leaderboard(self, mode):
         filename = f"{mode}.txt"
         scores = []
 
+        # Splitting the name and time in the list to try and append it to scores list, but returns empty list if there is no file found
         try:
             with open(filename, "r") as f:
                 for line in f:
@@ -1154,13 +1175,18 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
         except FileNotFoundError:
             return []
         
+        # Sorting time which is index number 1 in the scores list, from lowest to highest number
+        # The reverse is true if the gamemode is fruitsweeper, since that gamemode counts points, not seconds
         if mode == "fruitsweeper":
             scores.sort(key=lambda x: x[1], reverse=True)
         else:
             scores.sort(key=lambda x: x[1])
+        # Returns only the top 10 from scores list
         return scores[:10]
     
+    # Displays the actual score content to the leaderboard scores frame
     def show_leaderboard(self, mode):
+        # Forgets the leaderboard menu frame so you only see the score
         self.lb_menu.grid_forget()
 
         self.lb_scores = tk.Frame(self.leaderboard_frame)
@@ -1169,8 +1195,10 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
         lb_title_label = tk.Label(self.lb_scores, text=f"{mode.capitalize()} Leaderboard")
         lb_title_label.grid(row=0, column=0)
 
+        # Gets scores by loading it from specific mode
         scores = self.load_leaderboard(mode)
         
+        # Display of the scores
         row = 1
         for name, time in scores[:10]:
             if mode == "fruitsweeper":
@@ -1184,10 +1212,12 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
         back_button = tk.Button(self.lb_scores, text="Back", command = self.show_lb_menu)
         back_button.grid(row=row, column=0)
 
+    # This function unhides the leaderboard menu frame by gridding it, while hiding/destroying the leaderboard scores frame.
     def show_lb_menu(self):
         self.lb_scores.destroy()
         self.lb_menu.grid(row=0, column=0)
 
+    # This function is called when the user wins, a popup window shows up to ask for the player name
     def ask_player_name(self, mode, time):
         popup = tk.Toplevel(self.root)
 
@@ -1197,6 +1227,7 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
         name_entry = tk.Entry(popup)
         name_entry.grid(row=1, column=0)
 
+        # If the user submits a name, saves it to the file by calling self.save_score and saving the time too before destroying the popup
         def submit():
             name = name_entry.get().strip()[:15]
             if name:
