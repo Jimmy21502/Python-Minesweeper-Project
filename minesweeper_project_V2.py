@@ -120,7 +120,6 @@ click on every tile that does not contain a bomb. (Click to continue)""")
         self.grid_frame = tk.Frame(self.tutorial_frame)
         self.grid_frame.grid(row = 1, column = 0, sticky = "NSEW")
         
-        self.tutorial_bombs = []
         self.tutorial_buttons = []
 
         for i in range(EASY_GRID):
@@ -728,7 +727,10 @@ Use your lights sparingly, and reveal every tile to win!""")
 
         return frame
 
+    # This function controls when to move onto the next instruction during the tutorial.
     def tutorial_clicks(self, event, i, j):
+        # self.tutorial_counter starts with a value of 0, increasing by 1 to indicate moving onto the next part of the tutorial.
+        # event.num represents mouse actions, with 1 being left-clicks and 3 being right-clicks.
         if self.tutorial_counter == 7 and event.num == 1:
             self.show_frame("EasyFrame")
 
@@ -942,7 +944,7 @@ one tile, therefore the tile highlighted red must be a bomb. (Click to continue)
         tile_counter = 0
         for i in range(rows):
             for j in range(columns):
-                if button_type[i][j]["state"] == "disabled":
+                if button_type[i][j]["state"] == "disabled" and button_type[i][j]["bg"] == "light grey":
                     tile_counter += 1
         print(tile_counter)
         if tile_counter == total_tile - total_bomb:
